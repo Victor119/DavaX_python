@@ -1,4 +1,0 @@
-FLTK output
-
-Fl_Multiline_Output -> Fl_Output -> Fl_Input -> Fl_Input_ -> Fl_Widget
-
