@@ -2,6 +2,8 @@ from flask import Flask, render_template_string, request
 
 app = Flask(__name__)
 
+# ----------------------------- HTML TEMPLATE ----------------------------------
+
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -98,6 +100,8 @@ HTML_TEMPLATE = """
 </html>
 """
 
+# ----------------------------- CLASSES ---------------------------------------
+
 class Point:
     def __init__(self, x, y):
         self._x = x
@@ -156,7 +160,80 @@ class MyReturnButton:
             "ret_h": self.h,
             "label": self.label
         }
+
+# ----------------------------- EDIT BOX CLASS ----------------------------------
+
+class MyEditBox:
+    def __init__(self, pos: Point, w: int, h: int, label: str):
+        self.x = pos.getX()
+        self.y = pos.getY()
+        self.w = w
+        self.h = h
+        self.label = label
+        self.tooltip = "Input field for short text with newlines."
+        self.wrap = True  # Equivalent behavior
+        self.controller = None
+        self.value = ""
+
+    def setText(self, txt: str):
+        self.value = txt
+
+    def getText(self):
+        return self.value
+
+    def input_cb(self):
+        # Placeholder for future callback logic, e.g., notify controller or update model
+        pass
+
+    def getRenderParams(self):
+        return {
+            "edit_x": self.x,
+            "edit_y": self.y,
+            "edit_w": self.w,
+            "edit_h": self.h,
+            "edit_label": self.label,
+            "edit_value": self.value
+        }
         
+# ----------------------------- MODEL CLASS ------------------------------------
+
+class Model:
+    def __init__(self):
+        self.lastChoice = 0
+        self.chView = None
+
+    def setLastChoice(self, ch):
+        self.lastChoice = ch
+        self.notify()
+
+    def getLastChoice(self):
+        return self.lastChoice
+
+    def setChView(self, db: MyDisplayBox):
+        self.chView = db
+
+    def notify(self):
+        if self.chView:
+            self.chView.setText("Last choice is " + str(self.lastChoice))
+
+# ----------------------------- CONTROLLER CLASS -------------------------------
+
+class Controller:
+    def __init__(self):
+        self.model = None
+
+    def setModel(self, aModel: Model):
+        self.model = aModel
+
+    def chControl(self, aString: str): # apply the action from the GUI to the model
+        try:
+            ch = int(aString.strip().split()[-1])
+            self.model.setLastChoice(ch)
+        except Exception as e:
+            print("Invalid input to Controller.chControl:", aString, e)
+
+# ----------------------------- VIEW-CONTROLLER ASSOCIATION --------------------
+
 class MyRadioButton:
     _id_counter = 0
 
@@ -170,12 +247,20 @@ class MyRadioButton:
         self.down_box = "FL_ROUND_DOWN_BOX"
         self.id = f"radio{MyRadioButton._id_counter}"
         MyRadioButton._id_counter += 1
+        self.controller = None
 
     def getRenderParams(self):
         return {
             "id": self.id,
             "label": self.label
         }
+
+    def setController(self, aCntrl):
+        self.controller = aCntrl
+
+    def radio_button_cb(self):
+        if self.controller:
+            self.controller.chControl(self.label)
 
 class MyRadioGroup:
     def __init__(self, pos: Point, w: int, h: int, label: str, no: int):
@@ -188,6 +273,12 @@ class MyRadioGroup:
 
     def getButtons(self):
         return self.elts
+    
+    def setController(self, aCntrl):
+        for rb in self.elts:
+            rb.setController(aCntrl)
+
+# ----------------------------- CONNECTION LOGIC ----------------------------------------
 
 class MyWindow:
     def __init__(self, pos: Point = None, w: int = 600, h: int = 400, title: str = "MyWindow"):
@@ -230,6 +321,8 @@ class MyWindow:
             params["radio_buttons"] = [rb.getRenderParams() for rb in self.radio_buttons]
         return params
 
+# ----------------------------- ROUTING --------------------------
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
@@ -245,13 +338,24 @@ def index():
     adb.setText(text)
     mainwindow.addDisplayBox(adb)
 
+    model = Model()
+    model.setChView(adb)
+
+    chCntrl = Controller()
+    chCntrl.setModel(model)
+    
+    posRG = Point(160, 150) # synchronized with CSS .radio-group
+    rg = MyRadioGroup(posRG, 150, 90, "MyChoice", 3)
+    rg.setController(chCntrl)
+    mainwindow.addRadioGroup(rg)
+    
     posRet = Point(400, 350)
     ret = MyReturnButton(posRet, 100, 25)
     mainwindow.addReturnButton(ret)
     
-    posRG = Point(160, 150) # sincronizat cu CSS .radio-group
-    rg = MyRadioGroup(posRG, 150, 90, "MyChoice", 3)
-    mainwindow.addRadioGroup(rg)
+    posEB = Point(350, 150)
+    eb = MyEditBox(posEB, 150, 100, "&My Input")
+    eb.setText("Initial edit text\nSecond line")
 
     return render_template_string(HTML_TEMPLATE, **mainwindow.getRenderParams())
 
