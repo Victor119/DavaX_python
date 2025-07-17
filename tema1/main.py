@@ -81,6 +81,12 @@ HTML_TEMPLATE = """
         <div class="display-container">
             <div class="display-label">1st display box</div>
             <input class="display-box" type="text" value="{{ text }}" readonly>
+
+            <div class="display-label" style="margin-left: 20px;">2nd display box</div>
+            <input class="display-box" type="text" value="{{ second_text }}" readonly>
+
+            <div class="display-label" style="margin-left: 20px;">3rd display box</div>
+            <input class="display-box" type="text" value="{{ third_text }}" readonly>
         </div>
         
         <div class="radio-group">
@@ -205,7 +211,9 @@ class MyEditBox:
 class Model:
     def __init__(self):
         self.lastChoice = 0
+        self.lastInput = ""
         self.chView = None
+        self.inpView = None
 
     def setLastChoice(self, ch):
         self.lastChoice = ch
@@ -217,9 +225,14 @@ class Model:
     def setChView(self, db: MyDisplayBox):
         self.chView = db
 
+    def setInpView(self, db):
+        self.inpView = db
+
     def notify(self):
         if self.chView:
             self.chView.setText("Last choice is " + str(self.lastChoice))
+        if self.inpView:
+            self.inpView.setText(f"Last input is `{self.lastInput}`")
 
 # ----------------------------- CONTROLLER CLASS -------------------------------
 
@@ -236,6 +249,9 @@ class Controller:
             self.model.setLastChoice(ch)
         except Exception as e:
             print("Invalid input to Controller.chControl:", aString, e)
+            
+    def inpControl(self, aString: str): # apply the action from the GUI to the model
+        self.model.setLastInput(aString)
 
 # ----------------------------- VIEW-CONTROLLER ASSOCIATION --------------------
 
@@ -297,9 +313,19 @@ class MyWindow:
         self.display_box = None
         self.return_button = None
         self.radio_buttons = []
+        
+        # Store references to all three display boxes
+        self.firstdb = None
+        self.seconddb = None
+        self.thirddb = None
 
     def addDisplayBox(self, display_box: MyDisplayBox):
-        self.display_box = display_box
+        if self.firstdb is None:
+            self.firstdb = display_box
+        elif self.seconddb is None:
+            self.seconddb = display_box
+        elif self.thirddb is None:
+            self.thirddb = display_box
 
     def addReturnButton(self, return_button: MyReturnButton):
         self.return_button = return_button
@@ -317,7 +343,9 @@ class MyWindow:
             "w": self.w,
             "h": self.h,
             "title": self.title,
-            "text": self.display_box.getText() if self.display_box else "",
+            "first_text": self.firstdb.getText() if self.firstdb else "",
+            "second_text": self.seconddb.getText() if self.seconddb else "",
+            "third_text": self.thirddb.getText() if self.thirddb else "",
             "label": self.display_box.label if self.display_box else ""
         }
         if self.return_button:
@@ -330,37 +358,55 @@ class MyWindow:
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    if request.method == "POST":
-        # Emulate button exit
-        return "<h1>Return button pressed. Application closed.</h1>"
-
     posMainWindow = Point(100, 200)
     mainwindow = MyWindow(posMainWindow, 600, 400)
 
+    # Display Boxes
     posFirstDB = Point(100, 50)
-    adb = MyDisplayBox(posFirstDB, 200, 50, "My display box")
-    text = request.args.get("text", default="My first output text.", type=str)
-    adb.setText(text)
-    mainwindow.addDisplayBox(adb)
+    firstdb = MyDisplayBox(posFirstDB, 200, 50, "My display box")
 
+    posSndDB = Point(375, 50)
+    seconddb = MyDisplayBox(posSndDB, 200, 50, "Second display")
+
+    posTrdDB = Point(200, 275)
+    thirddb = MyDisplayBox(posTrdDB, 250, 50, "Third display")
+
+    firstdb.setText("My first output text.")
+    seconddb.setText("My second output text.")
+    thirddb.setText("My third output text.")
+
+    mainwindow.addDisplayBox(firstdb)
+    mainwindow.addDisplayBox(seconddb)
+    mainwindow.addDisplayBox(thirddb)
+
+    # Model and Controller
     model = Model()
-    model.setChView(adb)
+    model.setInpView(seconddb)
+    model.setChView(thirddb)
 
     chCntrl = Controller()
     chCntrl.setModel(model)
-    
-    posRG = Point(160, 150) # synchronized with CSS .radio-group
+
+    # Radio Group
+    posRG = Point(160, 150)
     rg = MyRadioGroup(posRG, 150, 90, "MyChoice", 3)
     rg.setController(chCntrl)
     mainwindow.addRadioGroup(rg)
-    
+
+    # Return Button
     posRet = Point(400, 350)
     ret = MyReturnButton(posRet, 100, 25)
     mainwindow.addReturnButton(ret)
-    
-    posEB = Point(400, 130) # synchronized with CSS edit_box
+
+    # Edit Box input
+    posEB = Point(400, 130)
     eb = MyEditBox(posEB, 150, 100, "&My Input")
     eb.setText("Initial edit text\nSecond line")
+
+    if request.method == "POST":
+        input_text = request.form.get("edit_box", "")
+        chCntrl.inpControl(input_text)
+        return "<h1>Return button pressed. Application closed.</h1>"
 
     return render_template_string(HTML_TEMPLATE, **mainwindow.getRenderParams())
 
