@@ -79,7 +79,7 @@ HTML_TEMPLATE = """
 <body>
     <div class="window">
         <div class="display-container">
-            <div class="display-label">{{ label }}</div>
+            <div class="display-label">1st display box</div>
             <input class="display-box" type="text" value="{{ text }}" readonly>
         </div>
         
@@ -87,9 +87,14 @@ HTML_TEMPLATE = """
             {% for rb in radio_buttons %}
             <div class="radio-option">
                 <input type="radio" id="{{ rb.id }}" name="radio_option" value="{{ rb.label }}">
-                <label for="{{ rb.id }}">{{ rb.label }}</label>
+                <label for="{{ rb.id }}">{{ rb.label.replace('My Choice', 'MyChoice') }}</label>
             </div>
             {% endfor %}
+        </div>
+        
+        <div style="position: absolute; top: 130px; left: 400px;">
+            <label for="edit_box" style="font-family: sans-serif; font-size: 14px;">My Input</label><br>
+            <textarea id="edit_box" name="edit_box" style="width: 150px; height: 100px; font-family: monospace; font-size: 14px;">Initial edit text Second line</textarea>
         </div>
         
         <form method="post">
@@ -353,7 +358,7 @@ def index():
     ret = MyReturnButton(posRet, 100, 25)
     mainwindow.addReturnButton(ret)
     
-    posEB = Point(350, 150)
+    posEB = Point(400, 130) # synchronized with CSS edit_box
     eb = MyEditBox(posEB, 150, 100, "&My Input")
     eb.setText("Initial edit text\nSecond line")
 
