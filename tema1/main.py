@@ -62,6 +62,16 @@ HTML_TEMPLATE = """
             height: {{ ret_h }}px;
             font-size: 12px;
         }
+        .radio-group {
+            position: absolute;
+            top: 150px;
+            left: 160px;
+            width: 200px;
+            border: 1px solid #333;
+            background-color: #eee;
+            padding: 10px;
+        }
+        
     </style>
 </head>
 <body>
@@ -70,10 +80,16 @@ HTML_TEMPLATE = """
             <div class="display-label">{{ label }}</div>
             <input class="display-box" type="text" value="{{ text }}" readonly>
         </div>
-        <div class="radio-button">
-            <input type="radio" id="{{ rb_id }}" name="radio_option" value="{{ rb_label }}">
-            <label for="{{ rb_id }}">{{ rb_label }}</label>
+        
+        <div class="radio-group">
+            {% for rb in radio_buttons %}
+            <div class="radio-option">
+                <input type="radio" id="{{ rb.id }}" name="radio_option" value="{{ rb.label }}">
+                <label for="{{ rb.id }}">{{ rb.label }}</label>
+            </div>
+            {% endfor %}
         </div>
+        
         <form method="post">
             <button class="return-button" type="submit">&Return</button>
         </form>
@@ -92,6 +108,9 @@ class Point:
 
     def getY(self):
         return self._y
+    
+    def setY(self, y):
+        self._y = y
 
 class Fl_Output:
     def __init__(self, x, y, w, h, label=None):
@@ -158,6 +177,18 @@ class MyRadioButton:
             "label": self.label
         }
 
+class MyRadioGroup:
+    def __init__(self, pos: Point, w: int, h: int, label: str, no: int):
+        self.elts = []
+        bpos = Point(pos.getX(), pos.getY())
+        for i in range(no):
+            bpos.setY(pos.getY() + i * 30)
+            rb = MyRadioButton(bpos, w, h // no, f"My Choice {i + 1}")
+            self.elts.append(rb)
+
+    def getButtons(self):
+        return self.elts
+
 class MyWindow:
     def __init__(self, pos: Point = None, w: int = 600, h: int = 400, title: str = "MyWindow"):
         if pos is None:
@@ -179,6 +210,9 @@ class MyWindow:
         
     def addRadioButton(self, rb: MyRadioButton):
         self.radio_buttons.append(rb)
+    
+    def addRadioGroup(self, group):
+        self.radio_buttons.extend(group.getButtons())
 
     def getRenderParams(self):
         params = {
@@ -215,7 +249,9 @@ def index():
     ret = MyReturnButton(posRet, 100, 25)
     mainwindow.addReturnButton(ret)
     
-    mainwindow.addRadioButton(MyRadioButton(Point(100, 150), 100, 30, "Option A"))
+    posRG = Point(160, 150) # sincronizat cu CSS .radio-group
+    rg = MyRadioGroup(posRG, 150, 90, "MyChoice", 3)
+    mainwindow.addRadioGroup(rg)
 
     return render_template_string(HTML_TEMPLATE, **mainwindow.getRenderParams())
 
