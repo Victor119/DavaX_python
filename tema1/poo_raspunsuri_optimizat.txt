@@ -1,0 +1,1444 @@
+Curs 1:
+1. Notiunile de clasa si obiect.
+
+In programare, un obiect reprezinta o instanta a unei clase. O clasa este un tip de date definit de utilizator pentru a modela un concept din lumea reala.
+
+O clasa are urmatorul format:
+	Variabile membru:
+		Variabile definite ca si membri ai clasei
+		Fiecare variabila membru(data member) poate avea propriul sau modificator de acces
+		Variabilele membru(data members) pot fi de asemenea static (in acest caz apartin clasei si nu instantei)
+		O clasa poate sa nu aiba nici o variabila membru(data member)
+	
+	Functii membru(methods):
+		Functii definite in interiorul clasei
+		Fiecare functie membru(method) poate avea propriul sau modificator de acces
+		
+        O functie membru(method) poate accesa orice variabila membru(data member) definita sau alta functie membru(method) definita in interiorul clasei indiferent de modificatorul sau 
+        de acces
+		
+        O clasa poate sa nu aiba nici o functie membru (method)
+
+	Constructori:
+		Functii membru(methods) fara un return type ce sunt apelate oricand o instanta a clasei este creata
+		O clasa poate nu aiba nici un constructor
+		Un constructor poate avea diferiti modificatori de acces
+
+	Destructor:
+		O functie fara un return type ce poate fi apelata oricand o instanta a clasei este distrusa
+		O clasa poate sa nu aiba nici un destructor
+
+	Operatori
+
+
+
+
+Curs 2:
+2.	Modificatorii de acces in C++.
+
+	In limbajul C++ sunt definiti 3 modificatori de acces:
+		public (permite acces la acel membru pentru oricine)
+		private (acces la acel membru este permis numai din functii ce au fost definite in acea clasa)
+			Acest modificator de acces este by default
+		protected: 
+        	Un membru cu modificatorul de acces protected este un membru ce poate fi accesat de clasele care mostenesc clasa curenta, dar nu poate fi accesat in afara clasei.
+
+
+	Urmatorul tabel arata daca un membru cu un anumit modificator de acces poate fi accesat si in ce conditii:
+	 __________ ____________ _____________ __________ _________________ ____________________
+	|Access    | In the     |In a         |Outside   | Friend function | Friend function    |
+	|modifier  | same class |derived class|it`s scope|in the base class|in the derived class|
+	|__________|____________|_____________|__________|_________________|____________________|
+	|public    | Yes        | Yes         | Yes      | Yes             | Yes                |
+	|__________|____________|_____________|__________|_________________|____________________|
+	|protected | Yes        | Yes         | No       | Yes             | Yes                |
+	|__________|____________|_____________|__________|_________________|____________________|
+	|private   | Yes        | No          | No       | Yes             | No                 |
+	|__________|____________|_____________|__________|_________________|____________________|
+
+
+	Modificatorii de acces pot fi, de asemenea, aplicati relatiei de mostenire
+
+	Ca rezultat, membrii din clasa de baza isi schimba modificatorul de acces original in clasa derivata
+
+	In exemplul de mai jos, deoarece variabila membru "x" are modificatorul de acces public
+	in clasa "Base", si relatia de mostenire este de asemenea public, "x" va fi public si in
+	clasa "Derived" si va fi accesibil in afara domeniului clasei.
+
+		class Base
+		{
+		public:
+			int x;
+		};               ______
+		class Derived : |public| Base
+		{		        |______|
+			int y;
+		public:
+			void SetY(int value) { ... }
+		};
+		void main()
+		{
+			Derived d;
+			d.x = 100;
+		}
+
+	
+	Regulile ce arata cum un modificator de acces se schimba daca schimbam modificatorul
+	de acces al relatiei de mostenire dupa cum urmeaza:
+	 _____________________________ __________ _________ ___________
+	|Access modifier used for the | public   | private | protected |
+	|   inheritance relation ->   |          |         |           |
+	|_____________________________|          |         |           |
+	|Access modifier used for a   |	         |         |           |
+	|  data member or method      |          |         |           |
+	|_____________________________|__________|_________|___________|
+	| public                      | public   | private | protected |
+	|_____________________________|__________|_________|___________|
+	| private                     |private   | private | private   |
+	|_____________________________|__________|_________|___________|
+	| protected                   |protected | private | protected |
+	|_____________________________|__________|_________|___________|
+
+			private > protected > public
+
+	
+
+3. Enumerati diferentele si asemanarile intre un pointer si o referinta ?
+
+O valoare a unui pointer poate fi schimbata (un pointer poate pointa catre o diferita adresa de memorie)
+O referinta poate pointa doar la o variabila si o data ce este initializata adresa de memorie a variabilei la care pointeaza nu mai poate fi schimbata
+
+Un pointer poate avea valoarea NULL
+O referinta poate pointa doar la o adresa de memorie ce exista
+
+Pointerii accepta anumite operatii aritmetice (+, -, ++, etc.). Acestea nu sunt valide pentru referinte
+
+Un pointer poate fi convertit la un alt pointer (cast). In particular orice pointer poate fi convertit la pointerul de tip void (void*).
+O referinta de un tip nu poate fi convertita catre un alt tip de referinta. Acest lucru garanteaza ca o referinta pointeaza (face referire) catre o adresa de memorie unde se afla un 
+anumit tip de variabila.
+
+Un pointer poate fi utilizat intr-un tablou si intializata dinamic. Acest lucru nu este posibil pentru o referinta. Cu toate acestea, o referinta poate pointa(face referire) catre o 
+valoarea temporara (constanta).
+
+
+Asemanari:
+    Atat pointerii cat si referintele indica o zona de memorie
+    Atat pointerii cat si referințele sunt utilizate pentru a accesa indirect o variabila
+
+
+
+4. Functii friend. Utilizare si limitari. Exemple.
+
+Pentru o clasa o functie "friend" este o functie ce poate accesa functii membru (methods) si variabile membru (data members) ce au ca si modificator de acces
+private in interiorul clasei
+
+O functie "friend" nu apartine clasei (in acest caz clasei Date)
+Din acest punct de vedere specificatorul de acces este irelevant ( nu conteaza daca functia "friend" este scrisa in sectiunea public sau private)
+
+
+Caz de compilare:
+	class Date
+	{
+		int x;
+	public:
+		Date(int value) : x(value) {}
+		friend class Printer;
+	};
+	class Printer
+	{
+	public:
+		void PrintDecimal(Date &d);
+		void PrintHexazecimal(Date &d);
+	};
+	void Printer::PrintDecimal(Date &d)
+	{
+		printf("x = %d\n", d.x);
+	}
+	void Printer::PrintHexazecimal(Date &d)
+	{
+		printf("x = %x\n", d.x);
+	}
+	void main()
+	{
+		Date d1(123);
+		Printer p;
+		p.PrintDecimal(d1);
+		p.PrintHexazecimal(d1);
+	}
+
+
+    Specificatorul "friend" poate fi aplicat pentru toata clasa: friend class Printer;
+    In acest caz, toate functiile membru(methods) din clasa "friend" pot accesa membrii din clasa originala (exemplu: toate functiile membru(methods) din clasa Printer pot accesa 
+    datele private.
+
+
+Caz de compilare:
+	class Data;
+	class Modifier
+	{
+	public:
+		void SetX(Data & d, int value);
+	};
+
+	class Data
+	{
+		int x;
+		int& GetXRef() { return x; }
+	public:
+		int GetX() { return x; }
+		friend void Modifier::SetX(Data &, int);
+	};
+
+	void Modifier::SetX(Data & d, int value)
+	{
+		d.GetXRef() = value;
+	}
+	void main()
+	{
+		Data d;
+		Modifier m;
+		m.SetX(d, 10);
+		printf("%d\n", d.GetX());
+	}
+	
+	O functie membru(method) dintr-o clasa poate fi de asemenea declarata ca friend o pentru o alta clasa
+
+	Declaratia trebuie sa includa exact semnatura(signature) functiei membru(method) si tipul de return
+		
+	In acest caz, metoda SetX(Date &, int) din clasa Modifier poate accesa datele private din class Data
+
+
+
+5. Supraincarcarea si suprascrierea metodelor
+
+Suprascrierea Metodelor:
+    Caz de compilare:
+		class A
+		{
+		public:
+			int a1, a2, a3;
+			void Set() { printf("A"); }
+		};
+		class B: public A
+		{
+		public:
+			int b1, b2;
+			void Set() { printf("B"); }
+		};
+		void main()
+		{
+			B b;
+			 ___________
+			|A* a = &b; |
+			|a->Set();  |
+			|___________|
+		}
+
+		In acest caz, codul va afisa "A" pe ecran, deoarece utilizam un pointer de tip A*
+	
+		Totusi, in realitate, pointerul "a" pointeaza la un obiect de tip B -> deci rezultatul
+		asteptat ar trebui sa fie ca produsul sa afiseze "B" si nu "A"
+
+		Deci...ce putem face pentru a schimba acest comportament?
+
+			Solutia este de a utiliza cuvantul cheie "virtual" in fata definitiei functiei membru (method)
+
+			Da facem acest lucru, programul va afisa "B"
+			
+			In acest caz, se spune ca clasa B suprascrie (overrides) functia membru (method) Set din clasa A
+
+			Utilizand cuvantul cheie virtual face ca functia membru (method) sa faca parte din instanta !
+
+				class A
+				{
+				public:
+					int a1, a2, a3;
+					 ________
+					|virtual | void Set() { printf("A"); }
+					|________|
+				};
+				class B: public A
+				{
+				public:
+					int b1, b2;
+					void Set() { printf("B"); }
+				};
+				void main()
+				{
+					B b;
+					A* a = &b;
+					a->Set();
+				}
+
+
+	Functii membru Virtuale (Virtual methods) pot fi utilizate pentru:
+		Polymorphism
+		Dealocarea memoriei (destructor virtual)
+		Tehnici Anti-debugging
+
+	Polymorphism = abilitatea de a accesa instantele diferitelor clase prin aceeasi interfata.
+	In particular in C++ acest lucru se traduce in abilitatea de a converti (cast) automat un pointer catre o anumita clasa in clasa de baza
+
+Method overloading (Supraincarcarea functiilor membru)
+	Supraincarcarea functiilor membru este o tehnica folosita in C++ prin care se pot defini 2 sau mai multe functii(functions)/functii membru(methods) cu acelasi nume (sau operatori)
+		
+	O functie(function) / functie membru(method) este identificata unic prin semnatura(signature) sa:
+		return-type FunctionName (param1-type, param2-type, … )
+			Semnatura(signature) unei functii(functions)/functii membru(method) este de forma:
+				1) function name (FunctionName)
+				2) Parameters type (if parameters are present)
+
+	Din moment ce parametrii sunt parte din semnatura functiei, mai multe functii/functii membru cu acelasi nume dar cu parametri diferiti sunt posibile
+	Cu toate acestea, asta nu se aplica pentru tipul returnat (inseamna ca functii cu acelasi nume si parametrii dar tipul returnat diferit nu exista)
+
+    Supraincarcarea functiilor membru (method overloading) NU este posibil daca functiile membru (methods) au aceiasi semnatura (acelasi 1) function name si acelasi 2) Parameters type)
+
+    Cand o functie(function) / functie membru (method) care a fost supraincarcata este apelata, compilatorul determina care dintre definitiile existente ale acelei 
+	functii(function) / functie membru (method) ar trebui sa o foloseasca
+	Acest proces se numeste rezolvarea supraincarcarii(overload resolution)
+
+		Este posibil ca rezultatul acestui proces sa fie inconcluziv (exemplu: compilatorul nu poate decide cea mai potrivita definitie pentru un nume specific).
+		In acest caz, va aparea o eroare la compilare si ambiguitatea va fi explicata
+
+
+
+
+
+Curs 3:
+
+6. Constructor si destructor. Definitie, responsabilitati, mod de apelare in cazul claselor derivate
+
+Constructori:
+	Un constructor este o functie fara tip(type-less) ce este apelata ori de cate ori o clasa este creata(de mine: instanta a clasei este creata)
+
+	Daca o clasa contine mai multe variabile membru(member data) ce au propriul lor constructor, acesti constructori vor fi apelati in ordinea in care acestia au fost declarati
+
+	O clasa ce contine cel putin o (una) variabila membru (data member) de tip const sau o(una) variabila membru (data member) ce este de tip referinta trebuie sa aiba un constructor 
+	unde aceste variabile membru (data members) sunt initializate 
+
+	Un constructor poate avea un modificator de acces (public, private, protected)
+
+
+Destructor:
+	O functie de destructor este apelata oricand vrem sa eliberam memoria pe care un obiect o ocupa
+	
+	Un destructor (daca exista) este unic si este lipsit de parametri
+
+	Un destructor nu poate fi de tip static
+	
+	Un destructor poate avea diferiti modificatori de acces (public/private/protected)
+
+
+Cand mostenim din mai multe clase, regula generala pentru apelarea constructorilor si destructorilor este urmatoarea:
+	1. Mai intai toti constructorii claselor de baza sunt apelati in ordinea in care sunt definite mostenirile (de la stanga-la-dreapta)
+	2. Toti constructorii variabilelor membru (data members) sunt apelati (din nou in ordinea definirii lor - de sus - in - jos)
+	3. Dupa valorile de initializare din constructor pentru variabilele membru (data members) (tipuri de baza, referinte, constante(constants) ) sunt 
+	utilizate in ordinea in care sunt definite in acea clasa
+	4. In final, este apelat codul constructorului clasei
+
+Destructorii sunt apelati in ordine inversa (incepand de la punctul 4 la punctul 1)
+
+
+
+
+
+Curs 4:
+
+7. Supraincarcarea operatorului "*". Exemple de utilizare.
+
+O clasa poate defini o serie de functii speciale ce se comporta exact ca un operator - adica pentru a permite programului sa explice cum ar trebui sa inteleaga compilatorul 
+anumite operatii intre clase.
+
+Folosim cuvantul cheie: "operator"
+	
+Aceste functii pot avea diferiti operatori de acces (si respecta reguli impuse de operatori - daca un operator este declarat privat atunci poate fi accesat doar in cadrul clasei)
+
+Operatorii pot fi implementati in afara claselor - in acest caz, daca este necesar, ei pot fi declarati ca functii de tip friend pentru a putea fi accesati de catre membrii 
+privati ai unei clase
+
+Caz de compilare:
+
+	class Integer
+	{
+		int value;
+	public:
+		Integer(int val) : value(val) {}
+		 ____________________________________________________
+		|friend int operator+ (const Integer &i, float val); |
+		|friend int operator+ (float val, const Integer &i); |
+		|____________________________________________________|
+	};
+	int operator+(const Integer &i, float val)
+	{
+		return i.value + (int)val;
+	}
+	int operator+(float val, const Integer &i)
+	{
+		return i.value + (int)val;
+	}
+	void main()
+	{
+		Integer n1(100);
+		Integer n2(200);
+		int y = (1.2f+n1)+(n2+1.5f);
+	}
+
+	Codul compileaza - functiile friend rezolva ambele cazuri (Integer+float si float+Integer)
+
+
+Pentru aceste cazuri, se recomanda de utilizarea functiilor friend si sa nu se creeze functii membru (methods) in cadrul 
+
+
+
+
+8. Operatori C++ (clasificare si exemple)
+
+In functie de numarul de parametri necesari pentru acel operator, exista:
+	Unar
+	Binar
+	Ternar
+	Mai multi parametri (Multi parameter)
+	
+In functie de tipul operatiei, sunt:
+	Aritmetic
+	Relational
+	Logic
+	Operatori pe biti (Bitwise operators)
+	Atribuire (Assignment)
+	Altii (Others)
+
+In functie de posibilitatea supraincarcarii
+	Cei ce pot fi supraincarcati (overloaded)
+	Cei ce NU pot fi supraincarcati (overloaded)
+
+Operator         | Tip   | Supraincarcare | Format      | Returneaza
+                 |(Type) | (Overload)     |             |
+-----------------|-------|----------------|-------------|-------------------
+sizeof           | Unar  | No             | sizeof(A)   | Valoare
+-----------------|-------|----------------|-------------|-------------------
++                | Binar | Yes            | A + B       | Valoare/referinta
+-----------------|-------|----------------|-------------|-------------------
+Condition(?)     | Ternar| No             | C? A:B      | A sau B in functie de evaluarea lui C
+-----------------|-------|----------------|-------------|-------------------
+() (function)    | Multi | Yes            | A(B,C,...)  | Valoare/referinta
+-----------------|-------|----------------|-------------|-------------------
+
+
+
+
+Curs 5:
+
+9. Ce este o functie virtuala pura + C++?  (de mine: raspunsul include definitii pentru: Metode virtuale, Polimorfism)
+
+Caz de compilare:
+
+		class A
+		{
+		public:
+			int a1, a2, a3;
+			void Set() { printf("A"); }
+		};
+		class B: public A
+		{
+		public:
+			int b1, b2;
+			void Set() { printf("B"); }
+		};
+		void main()
+		{
+			B b;
+			 ___________
+			|A* a = &b; |
+			|a->Set();  |
+			|___________|
+		}
+
+		In acest caz, codul va afisa "A" pe ecran, deoarece utilizam un pointer de tip A*
+	
+		Totusi, in realitate, pointerul "a" pointeaza la un obiect de tip B -> deci rezultatul
+		asteptat ar trebui sa fie ca produsul sa afiseze "B" si nu "A"
+
+		Deci...ce putem face pentru a schimba acest comportament?
+
+			Solutia este de a utiliza cuvantul cheie "virtual" in fata definitiei functiei membru (method)
+
+			Da facem acest lucru, programul va afisa "B"
+			
+			In acest caz, se spune ca clasa B suprascrie (overrides) functia membru (method) Set din clasa A
+
+			Utilizand cuvantul cheie virtual face ca functia membru (method) sa faca parte din instanta !
+
+				class A
+				{
+				public:
+					int a1, a2, a3;
+					 ________
+					|virtual | void Set() { printf("A"); }
+					|________|
+				};
+				class B: public A
+				{
+				public:
+					int b1, b2;
+					void Set() { printf("B"); }
+				};
+				void main()
+				{
+					B b;
+					A* a = &b;
+					a->Set();
+				}
+
+
+	Functii membru Virtuale (Virtual methods) pot fi utilizate pentru:
+		Polymorphism
+		Dealocarea memoriei (destructor virtual)
+		Tehnici Anti-debugging
+
+	Polymorphism = abilitatea de a accesa instantele diferitelor clase prin aceeasi interfata.
+	In particular in C++ acest lucru se traduce in abilitatea de a converti (cast) automat un pointer catre o anumita clasa in clasa de baza
+
+
+
+
+
+10. Care este rolul derivarii virtuale in C++ ? Exemple
+
+Mostenirea multipla poate crea situatii de ambiguitate. De exemplu, in acest caz (de mine: de mai jos) campurile din clasa A sunt copiate de 2 ori in clasa C.
+
+	class A {
+	public:
+		int a1, a2, a3;
+	};               _______
+	class B: public |virtual| A {
+	public:         |_______|
+		int b1, b2;
+	};                _______
+	class C : public |virtual| A, public B {
+	public:          |_______|
+		int c1, c2;
+	};
+	void main()
+	{
+		C c;
+		c.a1 = 10;
+		c.a2 = 20;
+	}
+
+Ce putem face daca vrem sa avem doar o singura copie a campurilor din clasa A in obiectul nostru?
+
+	Aceasta problema este cunoscuta si sub numele de "Diamond Problem"
+
+O solutie la aceasta problema este de a utiliza specificatorul virtual cand derivam dintr-o clasa. In acest caz, clasa "A" este mostenita virtual (inseamna ca: 
+campurile sale trebuie adaugate o singura data)
+
+Pentru ca acest cod sa functioneze, atat clasa "C", cat si clasa "B" trebuie sa mosteneasca clasa "A" utilizand cuvantul cheie virtual
+
+
+
+
+11. Clase abstracte vs interfete: Asemanari, definitii, detalii de implementare (de mine: include definitii pentru functie virtual pura)
+
+	In C++ noi putem defini o functie membru virtuala fara corp (se numeste functie membru virtuala pura (pure virtual method) si este definita prin
+	adaugarea "=0" la sfarsitul definitiei sale).
+
+	Daca o clasa contine o functie membru virtuala pura, acea clasa este o clasa abstracta (o clasa ce nu poate fi instantiata).
+	In alte limbaje acest concept este similar cu conceptul de interfata (interface).
+
+	Avand o functie membru virtuala pura forteaza pe cel care implementeaza o clasa derivata sa implementeze si acea functie membru (method) daca 
+	el/ea doreste sa creeze o instanta pentru clasa noua creata.
+
+	Alte limbaje (precum Java sau C#) au un concept similar numit interfata (interface) (utilizat in aceste limbaje pentru a evita mostenirea multipla)
+
+	Interfetele (interfaces) sunt totusi diferite de o clasa abstracta. O interfata NU POATE avea variabile membru (data members), sau functii membru (methods) ce nu sunt virtual 
+	pure (pure virtual). O clasa abstracta este o clasa ce are cel putin o functie membru virtual pura (pure virtual method). O clasa abstracta poate avea 
+	functii membru (methods), constructori, destructori sau variabile membru (data members).
+
+	In C++ este deobicei mai usor de utilizat struct in loc de o clasa pentru a descrie o interfata datorita faptului ca modificatorul de access implicit (default) este public
+
+	Cl.exe (Microsoft) are un cuvant cheie (__interface) ce functioneaza ca o interfata (iti permite sa creezi una). Totusi, acest lucru nu este parte din standard. 
+
+	Clasa Abstracta: 
+	 ______________
+	| Ast          |
+	|______________|
+	| size()       |
+	| chldNo()     |
+	| child(int i) |
+	| print()      |
+	|______________|
+
+	class Ast {
+	public:
+		virtual int size() = 0;
+		virtual int chldNo() = 0;
+		virtual Ast* child(int i) = 0;
+		virtual void print() = 0;
+	};
+
+	interfata = o colectie de operatii care caracterizeaza comportarea unui obiect
+
+	interfetele in C++ sunt descrise cu ajutorul claselor abstracte:
+
+	 _______________
+	| <<interface>> |
+	|   Printable   |
+	|_______________|
+	|_______________|
+	| print()       |
+	|_______________|
+		  /_\
+           |
+	 _ _ _ | _ _ _ 
+ ___|_____       _|_______
+| Person  |		| Course  |
+|_________|		|_________|
+|_________|     |_________|
+| print() |     | print() |
+|_________|     |_________|
+    /_\
+	 |
+ ____|____
+| Student |
+|_________|
+|_________|
+| print() |
+|_________|	 
+
+	class Printable {
+	public: 
+		virtual void print() = 0;
+	};
+	class Person : public Printable {
+	public: 
+		virtual void print();
+	}
+	...
+	void Person::print() {
+	...
+	}
+
+	Intrebare Radulescu: cand se folosesc una sau cealalta? 
+	interfata: Se foloseste atunci cand vrei sa definesti doar un contract, adica specificatii despre ce operatii trebuie sa fie disponibile, fara sa te gandesti la implementarea lor
+	abstracta: Se alege atunci cand ai o idee despre functionalitate si doresti sa oferi o implementare partiala sau chiar completa pentru anumite metode. Astfel, clasa abstracta 
+	poate contine si functii membre cu implementare, variabile de membru, constructori sau destructori.
+
+
+12. Suprascrierea/overriding, polimorfism dinamic- ce e asta? R: (polimorfismul static are loc la compile time, se face prin method overloading, iar polimorfismul dinamic are loc la 
+run time si se face prin metode virtuale, aka overriding)
+
+	
+	Polimorfismul dinamic reprezinta apelul functiei in polimorfism la runtime ce se rezolva in timpul executiei, spre deosebire de polimorfismul la compilare (static), unde 
+	compilatorul determina ce apel de functie sa lege in timpul compilarii. Polimorfismul la runtime este implementat prin suprascrierea functiilor folosind functii virtuale.
+
+	Sa analizam urmatorul caz:
+
+		class A
+		{
+		public:
+			virtual bool Odd(int x) { return x % 2 == 0; }
+		};
+		class B : public A
+		{
+		public:				          _________
+			virtual bool Odd(char x) |override | { return x % 3 == 0; }
+						             |_________|
+		};
+		int main() {
+			A* a = new B();
+			printf("%d\n", a->Odd(3));
+			return 0;
+		}
+
+		La linia: virtual bool Odd(char x) override
+		error C3668: 'A::Odd': method with override specifier
+		'override' did not override any base class methods
+
+		Odd este o functie virtuala - totusi, clasa B nu o suprascrie (deoarece utilizeaza char ca prim parametru in loc de int).
+		Ca rezultat, clasa B va avea 2 functii membru (methods) Odd iar a->Odd va apela pe cea cu un parametru de tip int.
+		Dupa executie, valoarea false (0) este afisata pe ecran
+
+		Pentru a suprascrie o functie virtuala trebuie utilizata ACEEASI semnatura a functiei membru (method) !
+
+		Presupunand ca, in realitate, intentia a fost sa se suprascrie functia membru(method) Odd, atunci un mod de
+		a ne asigura ca astfel de greseli nu vor aparea este de a utiliza cuvantul cheie override (adaugat cu 
+		standardul C++11).
+		Ca rezultat, acest cod nu va compila deoarece se asteapta ca functia membru (method) Odd sa aiba aceeasi semnatura !!!
+
+		override -> Scopul acestei functii membru (method) este de a suprascrie functia membru (method) existenta din clasa de baza (in acest caz, suprascrie A::Odd)
+
+
+
+13. Relatiile de mostenire si de derivare. Clasificarea relatiei de derivare, cand derivarea defineste o mostenire, implementare.
+
+	Mostenirea este un proces ce transfera proprietatile unei clasei (functii membru (methods) si membrii) de la o
+	clasa (deobicei numita clasa de baza) la alta ce mosteneste clasa de baza - numita clasa derivata.
+	Clasa derivata poate extinde clasa de baza prin adaugarea de functii membru (methods) si/sau membrii (members) suplimentari.
+
+	Un astfel de exemplu va fi clasa Automobile, unde putem defini urmatoarele proprietati:
+		Numarul de usi
+		Numarul de roti
+		Marimea
+
+	Din aceasta clasa putem deriva o particularizare a clasei Automobile (pentru exemplu 
+	masini electrice) care pe langa proprietatile clasei de baza (usi,roti,marime,etc.)
+	au propriile sale proprietati (autonomia bateriei)
+
+
+	Mostenirea in cazul claselor din C++ pot fi simpla sau multipla: 
+	
+		Mostenire Simpla:
+			class <class_name>: <access modifier> <base class> { ... }
+
+		Mostenire Multipla:
+
+			class <class_name>: <access modifier> <base class 1> ,
+					    <access modifier> <base class 2> ,
+					    <access modifier> <base class 3> ,
+					    ...
+					    <access modifier> <base class n> 
+					    { ... }
+
+	Modificatorul de acces este optional si poate fi unul din urmatoarele:
+		(public, private sau protected)
+
+	Daca nu este specificat, modificatorul de acces implicit este private
+
+	Clasa "Derived" mosteneste membri si functii membru (methods) de la clasa "Base".
+	De aceea, putem apela functiile membru (methods) SetX si SetY dintr-o instanta a clasei "Derived".
+	
+		class Base
+		{
+		public:
+			int x;
+			void SetX(int value);
+		};
+		class Derived : public Base
+		{
+			int y;
+		public:
+			void SetY(int value);
+		};
+
+		void main()
+		{
+			Derived d;
+			d.SetX(100);
+			d.x = 10;
+			d.SetY(200);
+		}
+
+
+
+Curs 6:
+14. Reguli de conversie (casting).
+
+Connversii (Casts)
+
+	Presupunanad ca clasa A este derivata din clasa B, atunci este posibil ca un obiect de tip A sa fie convertit intr-un obiect de tip B
+
+	Acesta este un comportament normal (evident A contine fiecare membru definit in B)
+
+	Regulile de conversie sunt urmatoarele:
+		Mereu va fi posibil sa convertim o clasa in oricare dintre clasele din care mosteneste
+
+		Nu este posibil sa convertim din clasa de baza la una din clasele care o mostenesc fara o conversie explicita (explicit cast)
+
+		Daca operatorul de castare(cast operator) este suprascris, niciuna din regulile de mai sus nu se aplica
+
+	Oricand discutam despre conversia intre clase ce impartasesc o relatie de mostenire, exista 2 notiuni ce trebuie mentionate: upcast & downcast
+
+	Sa presupunem ca avem urmatoarele clase:
+			
+		App.cpp (C inherits B inherits A)
+			class A { public: int a1, a2, a3; };
+			class B : public A { public: int b1, b2; };
+			class C : public B { public: int c1, c2; };
+
+	Avem urmatoarea terminologie:	
+
+		void main() {
+			C object;
+			A * base = &object;
+		}
+
+			UPCAST: De la copil la parinte <=> conversie la clasa de baza
+				Mereu posibil si sigura
+
+		si
+
+		void main() {
+			A object;
+			C * child = (C*)(&object);
+		}
+
+			DOWNCAST: De la parinte la copil
+				Necesita conversia explicita sau conversia dinamica
+				Nesigura !!!
+
+	C++ are mai multe moduri/cuvinte cheie ce pot fi utilizate pentru a specifica cum ar trebui sa se comporte conversia(cast):
+		static_cast implica o conversia in care:
+			Valoarile pot fi trunchiate la atribuire
+			In cazul mostenirii, adresa la care un pointer pointeaza poate fi schimbata
+
+			Este in mod particular util daca vrem sa identificam o functie cu o multime specifica de parametri (in special daca avem mai multe instante ale acelei
+			funcii/functii membru (method) si apelarea acestora ar putea produce o ambiguitate)
+
+		reinterpret_cast este cel mai simplu mecanism de conversie (cast) ce consta in schimbarea tipului unui pointer, in timp ce mentine aceeasi adresa la care acesta pointeaza
+			
+			Acesta este cea mai rapida conversie (cast) posibila (garanteaza utilizarea unui numar foarte mic de instructini de assembley pentru traducerea tipului de pointer)
+			Totusi, are un dezavantaj deoarece permite conversiile (casts) intre pointeri de tipuri incompatibile. 
+
+		dynamic_cast functioneaza prin conversia in siguranta a unui pointer/referinta de un anumit tip intr-un pointer/referinta de un alt tip, daca exista o relatie de mostenire 
+		intre cele 2 tipuri
+	
+		const_cast este utilizat pentru a schimba caracteristicile "const" pentru un obiect. Poate fi utilizata doar pe date de acelasi tip (nu va face conversia de la un tip la 
+		altul), acesta doar va sterge caracterstica "const" a unui obiect.
+
+			De asemenea este important de mentionat ca acest tip de conversie poate produce un comportament nedefinit in functie de modul in care este utilizat !!!
+
+		Toate acestea au urmatoarea sintaxa:
+
+			static_cast  <type to cast to> (expression)
+			const_cast   <type to cast to> (expression)
+			dynamic_cast < type to cast to> (expression)
+			reinterpret_cast <type to cast to> (expression) 
+
+
+
+15.	Clase parametrizate. Definitie, exemple canonice, implementare
+
+	Macro-urile aduc mare putere codului scris in C/C++
+	
+	Template-urile pot fi considerate ca fiind derivate din notiunea de macro -> adaptate pentru functii si clase
+
+	Scopul este de a defini un model de functie sau clasa in care tipurile de date cu care lucram pot fi modificate la etapa de precompilare (similar cu macro)
+
+	Pentru aceasta exista un cuvant cheie "template"
+
+	La fel ca macro, utilizarea template-urilor genereaza extra cod la compilare (cod ce este specific pentru tipurile de date pentru care template-urile sunt facute).
+	Totusi codul este mai rapid si eficient.
+
+	Template-urile definite in C++ sunt de 2 tipuri:
+
+		Pentru clase
+
+		Pentru functii
+
+	Template-urile functioneaza la fel ca macro - prin substitutie
+
+	Diferenta este ca substitutia template-ului pentru clase nu se face unde este utilizata prima instanta a acelei clase, ci separat, deci alte instante ce utilizeaza
+	acelasi tip de date sa poata utiliza acelasi template substituit
+
+	Important: Deoarece substitutia este facuta in timpul precompilarii, template-urile trebuie sa fie stocate in fisierele ce sunt exportate dintr-o librarie (file.h) altfel 
+	compilatorul (in cazul in care se incearca crearea unei clase dintr-un template exportat dintr-o librarie) nu va putea face acest lucru.
+
+	Template-uri pentru o functie sunt definite astfel:
+
+		template <class T>
+		Return_type function_name(parameters)
+
+		Sau
+
+		template <typename T>
+		Return_type function_name(parameters)
+
+	Cel putin unul dintre "Return_type" sau "parametri" trebuie sa contina un membru de tip T:
+
+		template <class T>
+		T Sum(T value_1,T value_2)
+		{
+			return value_1 + value_2;
+		}
+
+
+
+16. Care este rolul unui template specializat ? Exemple.
+
+Template specialization
+
+	Template-urile au o serie de limitari:
+		Cea mai mare limitare este ca o functie membru dintr-o clasa ce utilizeaza un template are exact acelasi 
+		comportament (singurul lucru ce difera este tipul de parametri)
+
+		De exemplu, daca definim o functie Sum cu 2 parametri x si y, in care returnam x+y, atunci nu putem modifica aceasta intr-o 
+		alta operatie (de exemplu daca x si y sunt de tip char sa returnam x*y in loc de x+y)
+
+	Aceasta limitare poate fi depasita daca utilizam template-uri specializate
+
+	Template-urile specializate reprezinta un mod in care pentru o clasa definim o functie membru (method) ce suprascrie codul initial
+	din template cu unul mai specific pentru parametrii de un anumit tip
+
+	
+	Template-urile specializat functioneaza pentru functii in acelasi mod:
+
+	template <class T>
+	int ConvertToInt(T value) { return (int)value; }
+	 _________________________________________________________________
+	| template <>                                                     |
+	| int ConvertToInt<char>(char value) { return (int)(value-'0'); } |<---Template specializat pentru char
+	|_________________________________________________________________|
+
+	void main(void)
+	{
+		int x = ConvertToInt<double>(1.5);
+		int y = ConvertToInt<char>('4');
+	}
+
+
+
+
+Curs 8:
+
+17. For each in C++11. Clase cu suport pentru foreach. Exemple.
+
+	Standardul C++11 adauga o noua sintaxa pentru instructiunea "for", care permite iterarea intr-un interval (similar cu ceea ce face o instructiune "for each").
+
+	Formatul este urmatorul:
+		for (variable_declaration : range_expresion) loop_statement
+
+	Un range_expression in acest context inseamna:
+		Un tablou de dimensiune fixa
+
+		Un obiect ce are functiile "begin()" si "end()" (cam majoritatea containerelor din biblioteca STL)
+
+		O lista de initializare
+
+	Instructiunea for este de obicei folosita cu cuvantul-cheie "auto"
+	
+	Exemplu:
+
+		void main()
+		{
+			int x[3] = { 1, 2, 3 };
+			for (int i : x)
+				printf("%d", i);
+		}
+
+		Acest cod va afisa toate cele trei elemente ale vectorului x. Codul urmator face exact acelasi lucru, dar lucreaza cu un obiect std::vector:
+
+		void main()	
+		{
+			vector<int> x = { 1, 2, 3 };
+			for (int i : x)
+			printf("%d", i);
+		}
+
+
+	For each poate fi, de asemenea, aplicat unui obiect. Totusi, acel obiect trebuie sa aiba definite functiile begin() si end():
+
+		class MyVector
+		{
+			int x[10];
+		public:
+			MyVector() { for (int tr = 0; tr < 10; tr++) x[tr] = tr; }
+			int* begin() { return &x[0]; }
+			int* end() { return &x[10]; }
+		};
+		void main()
+		{
+			MyVector v;
+			for (int i : v)
+				printf("%d,",i);
+		}
+
+		Codul compileaza corect
+
+	Exista si posibilitatea de a crea propriul tau iterator care poate fi returnat din functiile begin() si end():
+
+		class MyIterator {
+		public:
+			int* p;
+			MyIterator& operator++(){ p++; return *this; }
+			bool operator != (MyIterator &m) { return p != m.p; }
+			int operator* () { return *p; }	
+		};
+		class MyVector {
+		...
+			MyIterator begin() { MyIterator tmp; tmp.p = &x[0]; return tmp; }
+			MyIterator end() {MyIterator tmp; tmp.p = &x[10]; return tmp; }
+		};
+		void main() {
+			MyVector v;
+			for (int i : v)
+				printf("%d,",i);
+		}
+
+		Acum codul compileaza
+
+	
+Curs 10
+
+18. Exceptii. Definitie si mecanismul de administrare in POO (am zis de Chain of
+responsibility | Q: nu ar putea fi command (inglobeaza exceptia si informatiile despre
+ea si le trimite mai departe) sau composite (exceptiile sunt organizate ierarhic)? ). R:
+https://dzone.com/articles/exception-handling-with-chain-of-responsibility (yes, dar e
+singura varianta de raspuns ? nu as zice, as zice ca toate ar compune un rsp.
+
+
+Eroare vs Exceptie
+Adesea, cei doi termeni sunt confundati.
+Totusi, exista o diferenta (subtila) intre sensurile celor doua notiuni.
+Eroare = comportament anormal detectat in timpul executiei, care trebuie eliminat prin repararea programului.
+Exceptie = comportament neprevazut care poate aparea in situatii rare sau extrem de rare.
+Exceptiile ar trebui gestionate in cazul programelor.
+O exceptie netratata este o eroare!
+
+Din manual:
+Expresia throw semnaleaza ca a aparut o conditie exceptionala — adesea, o eroare — intr-un bloc try. Poti utiliza un obiect de orice tip ca operand al unei expresii throw. De obicei, 
+acest obiect este folosit pentru a comunica informatii despre eroare.
+
+Blocul try este folosit pentru a incadra una sau mai multe instructiuni care ar putea arunca o exceptie (componenta de afaceri).
+
+Blocurile catch sunt implementate imediat dupa un bloc try. Fiecare bloc catch specifica tipul de exceptie pe care il poate gestiona (componenta de tratare a erorilor).
+
+Cum se executa un cod care include throw?
+Deoarece poate arunca(throw) exceptii, putem DOAR incerca(try) sa il executam.
+Ce se intampla cand un cod incercat arunca(throw) exceptii?
+Ele trebuie capturate, folosind catch, si tratate.
+
+
+
+Curs 12:
+19. Relatii de asociere intre clase / instante in OOP; definitie, tipuri, exemple
+Relatii de asociere intre clase/obiecte. Definite, clasificare, implementare.
+
+
+Relatia de asociere
+	Modeleaza relatii dintre obiecte
+
+						asociere bidirectionala            asociere unidirectionala
+                               |                                 |
+                               |                                 |
+     ______________  0..*      |      0..* _______________       |      __________________
+	| class Author |__________\|/_________| class Book    |/____\|/____| class HardCopy   | 
+	|______________|author           books|_______________|\ book      |__________________|
+	| String name; |   ^              ^   | String title; |            | int referenceNo; |
+	|______________|   |              |   |_______________|            |__________________|
+	                   |              |
+					   |______|_______|
+					          |
+							roluri
+
+
+asociere unidirectionala:
+	an expression is evaluated in a state (the expression knows the state it is evaluated)
+	the state does not know for which expression it is used for evaluation
+
+
+asociere bidirectionala:
+	an expression is evaluated in a state (the expression knows the state it is evaluated)
+	the state knows for which expression it is used for evaluation
+
+class Author {
+private:
+ list< Book* > books;
+ ...
+};
+class Book {
+private:
+ list< Author* > authors;
+ ...
+};
+class HardCopy {
+private:
+ Book *book;
+ ...
+};
+
+
+
+20. Relatii de agregare. Implementare. Clasificare. Definiții 
+
+Relatia de agregare (compunere)
+	Arata cum obiectele mai mari sunt compuse din Obiecte mai mici
+	Poate fi privita si ca o relatie de asociere speciala
+	Exista doua tipuri de agregare:
+		agregare slaba (romb neumplut), cand o componenta poate apartine la mai multe agregate (obiecte compuse)
+		agregare tare (romb umplut cu negru), cand o componenta poate apartine la cel mult un agregat (obiect compus)
+
+     ______________________                   0...*   _______________
+	| class AccountManager |/romb plin\_____________\| class Account | 
+    |______________________|\         /             /|_______________|
+
+
+	un cont apartine la un singur manager; stergere manager => stergere cont
+
+	un manager de conturi poate avea zero sau mai multe conturi
+
+	
+     ______________________                 0...*   ______________
+	| class AccountManager |/romb gol\_____________| class Figure | 
+    |______________________|\        /             |______________|
+
+	o figura poate apartine la mai multe repozitorii; stergere repozitoriu => stergere figura
+
+
+agregare tare (compunere)
+#include <list> // header pt. listele STL
+...
+class AccountManager {
+private:
+ list< Account > accounts; //liste in care componentele sunt obiecte Account
+};
+ 
+agregare (slaba)
+#include <list>
+...
+class FigureRepository {
+private:
+ list< Figure* > figures; // liste in care componentele sunt pointeri la obiecte Figure
+};
+
+
+
+21. Open close principle. Ce e, un caz care nu respecta modelul si solutie
+
+Prinipiul inchis-deschis
+
+Entitatile software (module, clase, functii etc.) trebuie sa fie deschise la extensii si inchise la modificare
+
+deschis la extensii = comportarea modulului poate fi extinsa pentru a satisface noile cerinte
+
+inchis la modificare = nu este permisa modificarea codului sursa
+
+Caz in care nu se respecta:
+
+             _____________                     ________________
+			| Shape       |                   | ShapeContainer |
+			|_____________|   *               |________________|
+			|_____________|/__________________|________________|
+			| read()      |\  shapes          | load()         |
+            |_____________|                   |________________|
+			   / \    / \                             |
+              /___\  /___\                            |
+		    ____|      |__                      ______|________________________
+		___|____      ____|______              |                               |
+	   | Circle |    | Rectangle |             | void load(std::ifstream& inp) |
+	   |________|    |___________|             | {                             |
+	   |________|    |___________|             |   while (inp)                 |
+	   | read() |    | read()    |             |   {                           |
+	   |________|    |___________|             |     int tag;                  |
+                                               |     Figura* pfig;             |
+											   |     inp >> tag;               |
+											   |     switch (tag)              |
+											   |     {                         |
+											   |       case RECTANGLE;         |
+											   |       ...                     |
+											   |       case CIRCLE;            |
+											   |       ...                     |
+											   |     }                         |
+	                                           |   }                           |
+											   | }                             |
+											   |_______________________________|
+
+	Daca adaugam mai multe shapes, trebuie sa modificam ShapeContainer::load()
+
+	Exemplul anterior poate fi corectat pentru a respecta principiul inchis-deschis folosind modelul Object Factory:
+
+	   
+             _____________                     ________________                    __________________________
+			| Shape       |                   | ShapeContainer |                  | ShapeFactory             |
+			|_____________|   *               |________________|                  |__________________________|
+			|_____________|/__________________|________________|_________________\|__________________________|
+			| read()      |\  shapes          | load()         |                 /| createProductCircle()    |       
+            |_____________|                   |________________|                  | createProductRectangle() |
+			   / \    / \                                                         |__________________________|
+              /___\  /___\                                                             / \            / \ 
+		    ____|      |__                                                            /___\          /___\
+		___|____      ____|______                                                   ____|              |__________
+	   | Circle |    | Rectangle |                                         ________|______________         _______|__________________
+	   |________|    |___________|                                        | CircleFactory         |		  |	RectangleFactory         |
+	   |________|    |___________|                                        |_______________________|       |__________________________|
+	   | read() |    | read()    |                                        |_______________________|       |__________________________|
+	   |________|    |___________|                                        | createProductCircle() |       | createProductRectangle() |
+           /|\            /|\                                             |_______________________|       |__________________________|
+			|--------------|----------------------------------------------------------|							      |
+                           |------------------------------------------------------------------------------------------|     
+
+
+
+
+22. Principiul lui Liskov.
+
+	"Requirement that S is a subtype of T: Let P(x) be a property provable about objects x of type T. Then P(y) should be true for objects y of type S, where S is a subtype of T."
+
+	Cu alte cuvinte, S este un subtip al lui T daca oriunde poti folosi un T, ai putea folosi si un S (un T poate fi inlocuit cu un S).
+
+	Aici, notiunea de subtip ar trebui inteleasa ca subtip comportamental.
+
+	Cand un tip (static) S este un subtip al unui tip (static) T (scris S <: T)?
+ 
+	De exemplu, fiecare int este un long int. Avem oare... ?
+	(int, _ + _ : int × int -> int)
+	<:
+	(long int, _ + _ : long int × long int -> long int)?
+
+	DA, daca consideram _ + _ ca functii partiale (no over-/under-flow).
+
+	NU, daca _ + _ este considerata o functie totala (MAX_INT + 2 pe int este diferit de MAX_INT + 2 pe long int).
+
+
+
+
+23. Principiul dependetelor inversate, descriere, exemple, cand nu se respecta, solutie ( care e solutia ?)
+Dependency inversion din SOLID cu exemple de asa da asa nu
+
+
+Principiul dependetelor inversate
+
+	Modulele de nivel inalt nu trebuie sa depinda de modulele de nivel jos. Amandoua trebuie sa depinda de abstractii
+
+	Abstractiile nu trebuie sa depinda de detalii. Detaliile trebuie sa depinda de abstractii
+
+
+	Caz in care nu se respecta:
+
+	                    
+     __________________                        ___________________________
+	| FigureRepository |/romb plin\___________| Figure                    |
+    |__________________|\         /           |___________________________|
+	                                          / \        / \          / \
+								             /___\      /___\        /___\
+								             __|____    __|_____     __|______
+						                    | Point |  | Circle |   | Polygon |
+                                            |_______|  |________|   |_________|
+						    
+
+		Nu se respecta principiul dependetelor inversate deoarece FigureRepository depinde de detaliile concrete de definire ale figurilor(puncte, cercuri, poligoane) in loc sa 
+		depinda de o abstractie (de exemplu Figure)
+
+	Solutia:
+     __________________                       ___________________________
+	| FigureRepository |/romb gol\___________| Figure                    |
+    |__________________|\        /           |___________________________|
+	                                         / \        / \          / \
+								            /___\      /___\        /___\
+								            __|____    __|_____     __|______
+						                   | Point |  | Circle |   | Polygon |
+                                           |_______|  |________|   |_________|
+
+		Se respecta principiul dependetelor inversate deoarece FigureRepository nu depinde de modul particular de definire a figurilor (puncte, cercuri, poligoane); toate depind de
+		abstractia Figure
+
+
+
+Curs 13:
+24. Design pattern-ul Composite. Exemple de utilizare
+
+Composite 
+
+	Este un pattern structural
+	Compune obiectele intr-o structura arborescenta pentru a reprezenta o ierarhie parte-intreg
+	Lasa clientii (structurii) sa trateze obiectele individuale si compuse intr-un mod uniform
+
+
+     ________                                        _________________
+	| Client |_____________________________________\| Graphic         |
+	|________|									   /|_________________|
+													|_________________|
+													| draw()          |   *
+													| add(Graphic)    |/______________________________________________________
+													| remove(Graphic) |\  graphics                                            |
+													| getChild(int)   |                                                       |
+													|_________________|                                                       |
+                                                          / \                                                                 |
+														 /___\                                                                |
+							 ______________________________|______________________________                                    |
+						 ___|____            ___|_______           ___|____            ___|_____________                      |
+						| Line   |          | Rectangle |         | Text   |          | Picture         |                     |
+						|________|          |___________|         |________|          |_________________|                     |
+                        |________|          |___________|         |________|          |_________________|                     |
+						| draw() |          | draw()    |         | draw() |          | draw()          |                     |
+						|________|          |___________|         |________|          | add(Graphic g)  |/ romb gol \_________|
+                                                                                      | remove(Graphic) |\          /
+																					  | getChild(int)   |           _________________________
+																					  |_________________|----------| for all g in graphics   |
+																					                               |   g.draw()              |
+																												   | add g to the list       |
+                                                                                                                   |_________________________|
+
+
+Participanti:
+Component (Graphic)
+	declara interfata pentru obiectele din compozitie
+	implementeaza comportarea implicita pentru interfata comuna a tuturor claselor
+	declara o interfata pentru accesarea si managementul componentelor-copii
+	(optional) defineste o interfata pentru accesarea componentelor-parinte in structura recursiva
+
+Leaf (Rectangle, Line, Text, etc.)
+	reprezinta obiectele primitive; 
+	o frunza nu are copii
+	defineste comportarea obiectelor primitive
+
+Composite (Picture)
+	defineste comportarea componentelor cu copii
+	memoreaza componentele-copil
+	implementeaza operatiile relative la copii din interfata Component
+
+Client
+	manipuleaza obiectele din compozitie prin intermediul interfetei Component (Graphic)
+
+
+Colaborari:
+	Clientii utilizeaza clasa de interfata Component pentru a interactiona cu obiectele din structura
+	Daca recipientul este o instanta Leaf, atunci cererea este rezolvata direct
+	Daca recipientul este o instanta Composite, atunci cererea este transmisa mai departe componentelor-copil; alte operatii aditionale sunt posibile inainte sau dupa transmitere
+
+Avantaje:
+	Este usor de adaugat noi tipuri de componente Leaf sau Composite
+	Face designul foarte general
+
+Dezavantaj: e dificil de restrictionat ce componente pot sa apara intr-un obiect compus (o solutie ar putea fi verificarea in timpul executiei)
+
+
+
+
+25. Design pattern-ul Visitor. Exemple de utilizare
+
+Sablonul Visitor 
+
+reprezinta o operatie care se executa peste elementele unei structuri de obiecte
+
+permite sa definirea de noi operatii fara a schimba clasele elementelor peste care lucreaza
+
+Motivatie
+	Un compilator este un program asemănător unui arbore sintactic abstract (AST). Acest arbore sintactic este folosit atât pentru semantica statică (de exemplu, verificarea 
+	tipurilor), cât și pentru generarea de cod, optimizarea codului și afișare.
+
+	Aceste operatii difera de la un tip de instructiune la altul. De exemplu, un nod care reprezinta o atribuire difera de un nod care reprezinta o expresie si, in consecinta, 
+	operatiile asupra lor vor fi diferite.
+
+	Aceste operatii ar trebui sa fie efectuate fara a modifica structura AST-ului.
+
+Solutie cu Visitors:
+Visitors:
+
+                                                 __________________________________________
+												| VisitorNode                              |
+												|__________________________________________|
+												|__________________________________________|
+												| visitVariableRef()                       |
+												| visitAssignment()                        |
+												|__________________________________________|
+												 / \          / \                     / \
+												/___\        /___\                   /___\
+                                 _________________|___    _____|________________    ___|________________
+								| VisitorTypeChecking |  | VisitorGeneratorCode |  | VisitorPrettyPrint |
+                                |_____________________|  |______________________|  |____________________|
+								|_____________________|  |______________________|  |____________________|
+								| visitVariableRef()  |  | visitVariableRef()   |  | visitVariableRef() |
+								| visitAssignment()   |  | visitAssignment()    |  | visitAssignment()  |
+								|_____________________|  |______________________|  |____________________| 
+
+
+Ierarhie:
+		     _________
+			| Program |                                       _______________________________________
+			|_________|/ romb gol \__________________________| Node                                  |
+			|_________|\          /                          |_______________________________________|
+			|_________|                                      |_______________________________________|
+			                                                 | accept(v:VisitorNode)                 |
+															 |_______________________________________|
+                                                                / \                             / \
+															   /___\                           /___\
+															 ____|__________________         ____|__________________
+															| NodeVariableRef       |       | NodeAssignment        |
+															|_______________________|       |_______________________|
+															|_______________________|       |_______________________|
+							 _______________________		| accept(v:VisitorNode) |       | accept(v:VisitorNode) |      ______________________
+							| v->visitVariableRef() |-------|_______________________|       |_______________________|-----| v->visitAssignment() |
+							|_______________________|                                                                     |______________________|
+
+
+Participanti:
+Visitor (NodeVisitor)
+	Declara cate o operatie de vizitare pentru fiecare clasa ConcreteElement din structura. 
+	Numele operatiei si signatura identifica clasa care trimite cererea de vizitare catre vizitator.
+	Aceasta permite vizitatorului sa identifice elementul concret pe care il viziteaza. 
+	Apoi, vizitatorul poate vizita elementul prin intermediul interfetei sale
+
+ConcreteVisitor (TypeCheckingVisitor)
+	Implementeaza fiecare operatie declarata de vizitator. 
+	Fiecare operatie implementeaza un fragment din algoritmul de vizitare care corespunde elementului din structura vizitat. 
+	Memoreaza starea algoritmului de vizitare, care de multe ori acumuleaza rezultatele obtinute in timpul vizitarii elementelor din structura.
+
+Element (Node)
+	Defineste operatii de acceptare, care au ca argument un vizitator 
+
+ConcreteElement (e.g. AssignmentNode,VariableRefNode)
+	Implementeaza operatia de acceptare											
+
+ObjectStructure (Program)
+	Poate enumera elementele sale
+	Poate furniza o interfata la nivel inalt pentru un vizitator care viziteaza elementele sale
+	Poate fi un "composite"
+
+Avantaje:
+	Visitor face adaugarea de noi operatii usoara
+	Un vizitator aduna operatiile care au legatura intre ele si le separa pe cele care nu au legatura
+	
+Dezavantaj:
+Adaugarea de noi clase ConcreteElement la structura este dificila: 
+	Provoaca scimbarea interfetelor tutoror vizitatorilor. 
+	Cateodata o implementare implicita in clasa abstracta Visitor poate usura munca.
+
+
+
+
+
+26. Design pattern-ul Object-Factory
+
+Object Factory
+
+	Este un model de design creational 
+	De a furniza o interfata pentru crearea unei familii de obiecte intercorelate sau dependente fara a specifica clasa lor concreta
+
+Aplicabilitate:
+	Un sistem ar trebui sa fie independent de modul in care sunt create produsele, compuse sau reprezentate
+	Un sistem ar urma sa fie configurat cu familii multiple de produse
+	O familie de obiecte intercorelate este proiectata astfel ca obiectele sa fie utilizate impreuna
+	Vrei sa furnizezi o biblioteca de produse si vrei sa fie accesibila numai interfata, nu si implementarea
+
+
+Motivatie: (De)serializarea expresiilor
+
+Structura:
+			     ________________   1
+			    | AbstratFactory |/_________________________________________________________________________________________
+			    |________________|\                                                                                         |
+			      / \     / \                                                                                               |
+		     	 /___\   /___\                                                                                              |
+				   |       |____________________                                                                            |
+			 	 __|_______________     ________|_________               ___________________________   1                ____|___          1   ___________________________
+			 	| ConcreteFactory2 |   | ConcreteFactory1 |             | AbstractProductA          |/_________________| Client |___________\|  AbstractProductB         |
+				|__________________|   |__________________|             |___________________________|\                 |________|           /|___________________________|
+				|__________________|   |__________________|                / \                  / \                                             / \                  / \ 
+				| createProductA() |   | createProductA() |               /___\                /___\                                           /___\                /___\
+				| createProductB() |   | createProductB() |          _______|___________      ___|_______________                         _______|___________      ___|_______________
+				|__________________|   |__________________|-------->| ConcreteProductA1 |    | ConcreteProductA2 |                       | ConcreteProductB1 |    | ConcreteProductB2 |
+				    |       |                   |                   |___________________|    |___________________|                       |___________________|    |___________________|
+					|		|                   |                                                     /|\                                        /|\                        /|\
+			        |       |___________________|______________________________________________________|                                          |                          |
+					|   	                    |                                                                                                 |                          |
+					|							|_________________________________________________________________________________________________|                          |
+                    |________________________________________________________________________________________________________________________________________________________|
+
+
+Corespondenta cu modelul standard pentru cazul (De)serializarea expresiilor:
+	AbstractProductA = Expression
+	AbstractProductB = Statements
+	ConcreteFactory = Registrar (registru de expresii, instructiuni)
+	Client = ExprManager (responsabila cu deserializarea)
+
+
+Participanti: Registrar
+
+	Este o clasa care sa gestioneze tipurile de expresii:
+		Inregistreaza un nou tip de expresie (apelata ori de cate ori se defineste o noua clasa derivata)
+		Eliminarea unui tip de expresie inregistrat (stergerea unei clase derivate)	
+		Crearea de obiecte expresie:
+			la nivel de implementare utilizam perechi (tag, createExprFn)
+			... si functii callback
+
+	Se poate utiliza sablonul Singleton pentru a avea o singura fabrica (registru)
