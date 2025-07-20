@@ -78,21 +78,22 @@ HTML_TEMPLATE = """
 <body>
     <div class="window">
         <div class="display-container">
-            <div class="display-label">1st display box</div>
+            <div class="display-label">pow function</div>
             <input class="display-box" type="text" value="{{ text }}" readonly>
 
-            <div class="display-label" style="margin-left: 20px;">2nd display box</div>
+            <div class="display-label" style="margin-left: 20px;">n-th fibbonaci number</div>
             <input class="display-box" type="text" value="{{ second_text }}" readonly>
 
-            <div class="display-label" style="margin-left: 20px;">3rd display box</div>
+            <div class="display-label" style="margin-left: 20px;">factorial of the number</div>
             <input class="display-box" type="text" value="{{ third_text }}" readonly>
         </div>
         
         <div class="radio-group">
-            {% for rb in radio_buttons %}
+            {% set custom_labels = ["pow function", "n-th fibbonaci number", "factorial of the number"] %}
+            {% for i in range(radio_buttons | length) %}
             <div class="radio-option">
-                <input type="radio" id="{{ rb.id }}" name="radio_option" value="{{ rb.label }}">
-                <label for="{{ rb.id }}">{{ rb.label.replace('My Choice', 'MyChoice') }}</label>
+                <input type="radio" id="{{ radio_buttons[i].id }}" name="radio_option" value="{{ custom_labels[i] }}">
+                <label for="{{ radio_buttons[i].id }}">{{ custom_labels[i] }}</label>
             </div>
             {% endfor %}
         </div>
@@ -358,7 +359,7 @@ class MyWindow:
 @app.route("/", methods=["GET", "POST"])
 def index():
     posMainWindow = Point(100, 200)
-    mainwindow = MyWindow(posMainWindow, 900, 400, "Main Window")
+    mainwindow = MyWindow(posMainWindow, 950, 400, "Main Window")
 
     # Display Boxes
     posFirstDB = Point(100, 50)
