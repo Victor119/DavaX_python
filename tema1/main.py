@@ -73,7 +73,6 @@ HTML_TEMPLATE = """
             background-color: #eee;
             padding: 10px;
         }
-        
     </style>
 </head>
 <body>
@@ -302,7 +301,7 @@ class MyRadioGroup:
 # ----------------------------- CONNECTION LOGIC ----------------------------------------
 
 class MyWindow:
-    def __init__(self, pos: Point = None, w: int = 600, h: int = 400, title: str = "MyWindow"):
+    def __init__(self, pos: Point, w: int, h: int, title: str):
         if pos is None:
             self.x, self.y = 100, 200
         else:
@@ -343,9 +342,9 @@ class MyWindow:
             "w": self.w,
             "h": self.h,
             "title": self.title,
-            "first_text": self.firstdb.getText() if self.firstdb else "",
-            "second_text": self.seconddb.getText() if self.seconddb else "",
-            "third_text": self.thirddb.getText() if self.thirddb else "",
+            "first_display_box_text": self.firstdb.getText() if self.firstdb else "",
+            "second_display_box_text": self.seconddb.getText() if self.seconddb else "",
+            "third_display_box_text": self.thirddb.getText() if self.thirddb else "",
             "label": self.display_box.label if self.display_box else ""
         }
         if self.return_button:
@@ -359,7 +358,7 @@ class MyWindow:
 @app.route("/", methods=["GET", "POST"])
 def index():
     posMainWindow = Point(100, 200)
-    mainwindow = MyWindow(posMainWindow, 600, 400)
+    mainwindow = MyWindow(posMainWindow, 900, 400, "Main Window")
 
     # Display Boxes
     posFirstDB = Point(100, 50)
