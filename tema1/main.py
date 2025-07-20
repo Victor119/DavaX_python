@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string, request
+from flask import Flask, render_template_string, request, session
 
 app = Flask(__name__)
 
@@ -79,7 +79,7 @@ HTML_TEMPLATE = """
     <div class="window">
         <div class="display-container">
             <div class="display-label">pow function</div>
-            <input class="display-box" type="text" value="{{ text }}" readonly>
+            <input class="display-box" type="text" value="{{ first_text }}" readonly>
 
             <div class="display-label" style="margin-left: 20px;">n-th fibbonaci number</div>
             <input class="display-box" type="text" value="{{ second_text }}" readonly>
@@ -88,22 +88,23 @@ HTML_TEMPLATE = """
             <input class="display-box" type="text" value="{{ third_text }}" readonly>
         </div>
         
-        <div class="radio-group">
-            {% set custom_labels = ["pow function", "n-th fibbonaci number", "factorial of the number"] %}
-            {% for i in range(radio_buttons | length) %}
-            <div class="radio-option">
-                <input type="radio" id="{{ radio_buttons[i].id }}" name="radio_option" value="{{ custom_labels[i] }}">
-                <label for="{{ radio_buttons[i].id }}">{{ custom_labels[i] }}</label>
-            </div>
-            {% endfor %}
-        </div>
-        
-        <div style="position: absolute; top: 130px; left: 400px;">
-            <label for="edit_box" style="font-family: sans-serif; font-size: 14px;">My Input</label><br>
-            <textarea id="edit_box" name="edit_box" style="width: 150px; height: 100px; font-family: monospace; font-size: 14px;">Initial edit text Second line</textarea>
-        </div>
-        
         <form method="post">
+            <div class="radio-group">
+                {% set custom_labels = ["pow function", "n-th fibbonaci number", "factorial of the number"] %}
+                {% for i in range(radio_buttons | length) %}
+                <div class="radio-option">
+                    <input type="radio" id="{{ radio_buttons[i].id }}" name="radio_option" value="{{ i + 1 }}" 
+                        {% if selected_choice == i + 1 %}checked{% endif %}>
+                    <label for="{{ radio_buttons[i].id }}">{{ custom_labels[i] }}</label>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div style="position: absolute; top: 130px; left: 400px;">
+                <label for="edit_box" style="font-family: sans-serif; font-size: 14px;">My Input</label><br>
+                <textarea id="edit_box" name="edit_box" style="width: 150px; height: 100px; font-family: monospace; font-size: 14px;">{{ current_input }}</textarea>
+            </div>
+            
             <button class="return-button" type="submit">&Return</button>
         </form>
     </div>
@@ -227,6 +228,9 @@ class Model:
 
     def setInpView(self, db):
         self.inpView = db
+    
+    def setLastInput(self, txt):
+        self.lastInput = txt
 
     def notify(self):
         if self.chView:
@@ -252,6 +256,27 @@ class Controller:
             
     def inpControl(self, aString: str): # apply the action from the GUI to the model
         self.model.setLastInput(aString)
+        
+        #Compute based on choice and update view accordingly
+        if self.model.getLastChoice() == 2: # check if the option corresponds to the n-th fibonacci number option
+            try:
+                n = int(aString.strip())
+                fib = self.fibonnaci(n)
+                self.model.inpView.setText(str(fib))
+            except Exception as e:
+                self.model.inpView.setText("Invalid input")
+    
+    def fibonnaci(self, n):
+        #base condition
+        if(n <= 1):
+            return n
+        
+        #problem broken down into 2 function calls
+        #and their results combined and returned
+        last = self.fibonnaci(n - 1)
+        slast = self.fibonnaci(n - 2)
+        
+        return last + slast
 
 # ----------------------------- VIEW-CONTROLLER ASSOCIATION --------------------
 
@@ -405,10 +430,34 @@ def index():
 
     if request.method == "POST":
         input_text = request.form.get("edit_box", "")
+        selected_choice = request.form.get("radio_option", "") # processing the value of the selected radio button
+        
+        # Process radio button selection
+        if selected_choice:
+            chCntrl.chControl(selected_choice)
+        
+        # Process input text
         chCntrl.inpControl(input_text)
-        return "<h1>Return button pressed. Application closed.</h1>"
-
-    return render_template_string(HTML_TEMPLATE, **mainwindow.getRenderParams())
-
+        
+        # Set current_input for rendering
+        current_input = input_text
+        eb.setText(input_text)
+    else:
+        # For GET requests, use the initial text
+        current_input = eb.getText()
+        selected_choice = ""
+    
+    # Prepare render parameters
+    render_params = mainwindow.getRenderParams()
+    render_params.update({
+        "selected_choice": int(selected_choice) if selected_choice else 0,
+        "current_input": current_input,
+        "first_text": firstdb.getText(),
+        "second_text": seconddb.getText(),
+        "third_text": thirddb.getText()
+    })
+    
+    return render_template_string(HTML_TEMPLATE, **render_params)
+    
 if __name__ == "__main__":
     app.run(debug=True)
