@@ -215,6 +215,7 @@ class Model:
         self.lastInput = ""
         self.chView = None
         self.inpView = None
+        self.factView = None
 
     def setLastChoice(self, ch):
         self.lastChoice = ch
@@ -231,6 +232,9 @@ class Model:
     
     def setLastInput(self, txt):
         self.lastInput = txt
+
+    def setFactView(self, db: MyDisplayBox):
+        self.factView = db
 
     def notify(self):
         if self.chView:
@@ -265,6 +269,14 @@ class Controller:
                 self.model.inpView.setText(str(fib))
             except Exception as e:
                 self.model.inpView.setText("Invalid input")
+                
+        elif self.model.getLastChoice() == 3: # check if the option corresponds to factorial
+            try:
+                n = int(aString.strip())
+                factorial_result = self.factorial(n)
+                self.model.factView.setText(str(factorial_result))
+            except Exception as e:
+                self.model.factView.setText("Invalid input")
     
     def fibonnaci(self, n):
         #base condition
@@ -277,6 +289,14 @@ class Controller:
         slast = self.fibonnaci(n - 2)
         
         return last + slast
+
+    def factorial(self, n):  # the function for factorial
+        if n < 0:
+            return "Error: negative number"
+        P = 1
+        for i in range(1, n + 1):
+            P *= i
+        return P
 
 # ----------------------------- VIEW-CONTROLLER ASSOCIATION --------------------
 
@@ -407,7 +427,7 @@ def index():
     # Model and Controller
     model = Model()
     model.setInpView(seconddb)
-    model.setChView(thirddb)
+    model.setFactView(thirddb)  # set the factorial view to the third display box
 
     chCntrl = Controller()
     chCntrl.setModel(model)
