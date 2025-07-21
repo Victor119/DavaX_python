@@ -1,3 +1,11 @@
+import sys
+import os
+
+# Adaugam calea catre folderul python_calculator
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "python_calculator")))
+
+from python_calculator.calculator import process_expression
+
 from flask import Flask, render_template_string, request, session
 
 app = Flask(__name__)
@@ -78,7 +86,7 @@ HTML_TEMPLATE = """
 <body>
     <div class="window">
         <div class="display-container">
-            <div class="display-label">pow function</div>
+            <div class="display-label">calculator function</div>
             <input class="display-box" type="text" value="{{ first_text }}" readonly>
 
             <div class="display-label" style="margin-left: 20px;">n-th fibbonaci number</div>
@@ -90,7 +98,7 @@ HTML_TEMPLATE = """
         
         <form method="post">
             <div class="radio-group">
-                {% set custom_labels = ["pow function", "n-th fibbonaci number", "factorial of the number"] %}
+                {% set custom_labels = ["calculator function", "n-th fibbonaci number", "factorial of the number"] %}
                 {% for i in range(radio_buttons | length) %}
                 <div class="radio-option">
                     <input type="radio" id="{{ radio_buttons[i].id }}" name="radio_option" value="{{ i + 1 }}" 
@@ -215,7 +223,7 @@ class Model:
         self.lastInput = ""
         self.chView = None
         self.inpView = None
-        self.factView = None
+        self.factorialOutputView = None
 
     def setLastChoice(self, ch):
         self.lastChoice = ch
@@ -224,23 +232,23 @@ class Model:
     def getLastChoice(self):
         return self.lastChoice
 
-    def setChView(self, db: MyDisplayBox):
-        self.chView = db
+    def setCalculatorView(self, db: MyDisplayBox):
+        self.calculatorOutputView = db
 
-    def setInpView(self, db):
-        self.inpView = db
+    def setFibonacciView(self, db: MyDisplayBox):
+        self.fibonacciOutputView = db
     
     def setLastInput(self, txt):
         self.lastInput = txt
 
-    def setFactView(self, db: MyDisplayBox):
-        self.factView = db
+    def setFactorialView(self, db: MyDisplayBox):
+        self.factorialOutputView = db
 
     def notify(self):
-        if self.chView:
-            self.chView.setText("Last choice is " + str(self.lastChoice))
-        if self.inpView:
-            self.inpView.setText(f"Last input is `{self.lastInput}`")
+        if self.calculatorOutputView:
+            self.calculatorOutputView.setText("Last choice is " + str(self.lastChoice))
+        if self.fibonacciOutputView:
+            self.fibonacciOutputView.setText(f"Last input is `{self.lastInput}`")
 
 # ----------------------------- CONTROLLER CLASS -------------------------------
 
@@ -262,21 +270,29 @@ class Controller:
         self.model.setLastInput(aString)
         
         #Compute based on choice and update view accordingly
+        if self.model.getLastChoice() == 1:  # check if the option corresponds to the calculator number option
+            try:
+                n = aString.strip()
+                result = process_expression(n)
+                self.model.calculatorOutputView.setText(str(result))
+            except Exception as e:
+                self.model.calculatorOutputView.setText("Invalid expression")
+
         if self.model.getLastChoice() == 2: # check if the option corresponds to the n-th fibonacci number option
             try:
                 n = int(aString.strip())
                 fib = self.fibonnaci(n)
-                self.model.inpView.setText(str(fib))
+                self.model.fibonacciOutputView.setText(str(fib))
             except Exception as e:
-                self.model.inpView.setText("Invalid input")
+                self.model.fibonacciOutputView.setText("Invalid input")
                 
         elif self.model.getLastChoice() == 3: # check if the option corresponds to factorial
             try:
                 n = int(aString.strip())
                 factorial_result = self.factorial(n)
-                self.model.factView.setText(str(factorial_result))
+                self.model.factorialOutputView.setText(str(factorial_result))
             except Exception as e:
-                self.model.factView.setText("Invalid input")
+                self.model.factorialOutputView.setText("Invalid input")
     
     def fibonnaci(self, n):
         #base condition
@@ -426,8 +442,9 @@ def index():
 
     # Model and Controller
     model = Model()
-    model.setInpView(seconddb)
-    model.setFactView(thirddb)  # set the factorial view to the third display box
+    model.setCalculatorView(firstdb) # set the calculator view to the first display box
+    model.setFibonacciView(seconddb) # set the fibonacci view to the second display box
+    model.setFactorialView(thirddb)  # set the factorial view to the third display box
 
     chCntrl = Controller()
     chCntrl.setModel(model)
