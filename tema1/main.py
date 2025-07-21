@@ -1,14 +1,23 @@
+
 import sys
 import os
+import sqlite3
+import json
+import logging
+from datetime import datetime
+from typing import Optional, Dict, Any
+from contextlib import contextmanager
 
-# Adaugam calea catre folderul python_calculator
+# add path to folder python_calculator
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "python_calculator")))
 
 from python_calculator.calculator import process_expression
 
-from flask import Flask, render_template_string, request, session
+from flask import Flask, request, jsonify, render_template_string
 
-app = Flask(__name__)
+from flask_cors import CORS
+
+import uuid
 
 # ----------------------------- HTML TEMPLATE ----------------------------------
 
@@ -120,6 +129,180 @@ HTML_TEMPLATE = """
 </html>
 """
 
+# ----------------------------- LOGGING CONFIGURATION ---------------------------
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('calculator_api.log'),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
+
+# ----------------------------- DATABASE LAYER -------------------------------
+
+class DatabaseManager:
+    def __init__(self, db_path: str = "calculator_api.db"):
+        self.db_path = db_path
+        self.init_database()
+
+    def init_database(self):
+        """Initialize the database with required tables"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Requests table to store all API requests
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS api_requests (
+                    id TEXT PRIMARY KEY,
+                    operation_type TEXT NOT NULL,
+                    input_value TEXT NOT NULL,
+                    result TEXT,
+                    status TEXT NOT NULL,
+                    error_message TEXT,
+                    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    ip_address TEXT,
+                    user_agent TEXT
+                )
+            ''')
+            
+            # Sessions table to maintain user sessions
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS user_sessions (
+                    session_id TEXT PRIMARY KEY,
+                    last_choice INTEGER DEFAULT 0,
+                    last_input TEXT DEFAULT '',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+            
+            conn.commit()
+            logger.info("Database initialized successfully")
+
+    @contextmanager
+    def get_connection(self):
+        """Context manager for database connections"""
+        conn = sqlite3.connect(self.db_path)
+        conn.row_factory = sqlite3.Row
+        try:
+            yield conn
+        except Exception as e:
+            conn.rollback()
+            logger.error(f"Database error: {e}")
+            raise
+        finally:
+            conn.close()
+
+    def log_request(self, operation_type: str, input_value: str, result: str = None, 
+                status: str = "success", error_message: str = None, 
+                ip_address: str = None, user_agent: str = None) -> str:
+        """Log an API request to the database"""
+        request_id = str(uuid.uuid4())
+        
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO api_requests 
+                (id, operation_type, input_value, result, status, error_message, ip_address, user_agent)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (request_id, operation_type, input_value, result, status, error_message, ip_address, user_agent))
+            conn.commit()
+        
+        return request_id
+
+    def get_session(self, session_id: str) -> Optional[Dict]:
+        """Get user session data"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT * FROM user_sessions WHERE session_id = ?', (session_id,))
+            row = cursor.fetchone()
+            return dict(row) if row else None
+
+    def update_session(self, session_id: str, last_choice: int = None, last_input: str = None):
+        """Update or create user session"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Check if session exists
+            cursor.execute('SELECT session_id FROM user_sessions WHERE session_id = ?', (session_id,))
+            exists = cursor.fetchone()
+            
+            if exists:
+                updates = []
+                params = []
+                
+                if last_choice is not None:
+                    updates.append('last_choice = ?')
+                    params.append(last_choice)
+                
+                if last_input is not None:
+                    updates.append('last_input = ?')
+                    params.append(last_input)
+                
+                if updates:
+                    updates.append('updated_at = CURRENT_TIMESTAMP')
+                    params.append(session_id)
+                    
+                    cursor.execute(f'''
+                        UPDATE user_sessions 
+                        SET {', '.join(updates)}
+                        WHERE session_id = ?
+                    ''', params)
+            else:
+                cursor.execute('''
+                    INSERT INTO user_sessions (session_id, last_choice, last_input)
+                    VALUES (?, ?, ?)
+                ''', (session_id, last_choice or 0, last_input or ''))
+            
+            conn.commit()
+
+    def get_request_history(self, limit: int = 100, offset: int = 0) -> list:
+        """Get request history with pagination"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT * FROM api_requests 
+                ORDER BY timestamp DESC 
+                LIMIT ? OFFSET ?
+            ''', (limit, offset))
+            return [dict(row) for row in cursor.fetchall()]
+
+    def get_analytics(self) -> Dict[str, Any]:
+        """Get basic analytics about API usage"""
+        with self.get_connection() as conn:
+            cursor = conn.cursor()
+            
+            # Total requests
+            cursor.execute('SELECT COUNT(*) as total FROM api_requests')
+            total_requests = cursor.fetchone()['total']
+            
+            # Requests by operation type
+            cursor.execute('''
+                SELECT operation_type, COUNT(*) as count 
+                FROM api_requests 
+                GROUP BY operation_type
+            ''')
+            operation_stats = {row['operation_type']: row['count'] for row in cursor.fetchall()}
+            
+            # Success rate
+            cursor.execute('''
+                SELECT status, COUNT(*) as count 
+                FROM api_requests 
+                GROUP BY status
+            ''')
+            status_stats = {row['status']: row['count'] for row in cursor.fetchall()}
+            
+            return {
+                'total_requests': total_requests,
+                'operation_stats': operation_stats,
+                'status_stats': status_stats
+            }
+
+
 # ----------------------------- CLASSES ---------------------------------------
 
 class Point:
@@ -218,15 +401,27 @@ class MyEditBox:
 # ----------------------------- MODEL CLASS ------------------------------------
 
 class Model:
-    def __init__(self):
-        self.lastChoice = 0
-        self.lastInput = ""
-        self.chView = None
-        self.inpView = None
+    def __init__(self, db_manager: DatabaseManager, session_id: str = None):
+        self.db_manager = db_manager
+        self.session_id = session_id or str(uuid.uuid4())
+        
+        # Load session data
+        session_data = self.db_manager.get_session(self.session_id)
+        if session_data:
+            self.lastChoice = session_data['last_choice']
+            self.lastInput = session_data['last_input']
+        else:
+            self.lastChoice = 0
+            self.lastInput = ""
+        
+        # Views (for web interface compatibility)
+        self.calculatorOutputView = None
+        self.fibonacciOutputView = None
         self.factorialOutputView = None
 
     def setLastChoice(self, ch):
         self.lastChoice = ch
+        self.db_manager.update_session(self.session_id, last_choice=ch)
         self.notify()
 
     def getLastChoice(self):
@@ -240,6 +435,7 @@ class Model:
     
     def setLastInput(self, txt):
         self.lastInput = txt
+        self.db_manager.update_session(self.session_id, last_input=txt)
 
     def setFactorialView(self, db: MyDisplayBox):
         self.factorialOutputView = db
@@ -249,12 +445,16 @@ class Model:
             self.calculatorOutputView.setText("Last choice is " + str(self.lastChoice))
         if self.fibonacciOutputView:
             self.fibonacciOutputView.setText(f"Last input is `{self.lastInput}`")
+    
+    def get_session_id(self):
+        return self.session_id
 
 # ----------------------------- CONTROLLER CLASS -------------------------------
 
 class Controller:
-    def __init__(self):
+    def __init__(self, db_manager: DatabaseManager = None):
         self.model = None
+        self.db_manager = db_manager
 
     def setModel(self, aModel: Model):
         self.model = aModel
@@ -278,7 +478,7 @@ class Controller:
             except Exception as e:
                 self.model.calculatorOutputView.setText("Invalid expression")
 
-        if self.model.getLastChoice() == 2: # check if the option corresponds to the n-th fibonacci number option
+        elif self.model.getLastChoice() == 2: # check if the option corresponds to the n-th fibonacci number option
             try:
                 n = int(aString.strip())
                 fib = self.fibonnaci(n)
@@ -313,6 +513,64 @@ class Controller:
         for i in range(1, n + 1):
             P *= i
         return P
+    
+    def calculate(self, operation_type: str, input_value: str, ip_address: str = None, user_agent: str = None):
+        """Main calculation method for API calls"""
+        try:
+            # Set operation type
+            operation_map = {
+                'calculator': 1,
+                'fibonacci': 2,
+                'factorial': 3
+            }
+            
+            if operation_type not in operation_map:
+                raise ValueError(f"Invalid operation type: {operation_type}")
+            
+            self.chControl(str(operation_map[operation_type]))
+            result = self.inpControl(input_value)
+            
+            # Log successful request
+            request_id = self.db_manager.log_request(
+                operation_type=operation_type,
+                input_value=input_value,
+                result=str(result),
+                status="success",
+                ip_address=ip_address,
+                user_agent=user_agent
+            )
+            
+            return {
+                'request_id': request_id,
+                'operation_type': operation_type,
+                'input_value': input_value,
+                'result': result,
+                'status': 'success',
+                'session_id': self.model.get_session_id()
+            }
+            
+        except Exception as e:
+            error_message = str(e)
+            logger.error(f"Calculation error: {error_message}")
+            
+            # Log failed request
+            request_id = self.db_manager.log_request(
+                operation_type=operation_type,
+                input_value=input_value,
+                status="error",
+                error_message=error_message,
+                ip_address=ip_address,
+                user_agent=user_agent
+            )
+            
+            return {
+                'request_id': request_id,
+                'operation_type': operation_type,
+                'input_value': input_value,
+                'error': error_message,
+                'status': 'error',
+                'session_id': self.model.get_session_id()
+            }
 
 # ----------------------------- VIEW-CONTROLLER ASSOCIATION --------------------
 
@@ -415,6 +673,160 @@ class MyWindow:
             params["radio_buttons"] = [rb.getRenderParams() for rb in self.radio_buttons]
         return params
 
+# ----------------------------- FLASK APPLICATION SETUP ---------------------
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+CORS(app)
+
+# Initialize database manager
+db_manager = DatabaseManager()
+
+# ----------------------------- API ENDPOINTS --------------------------------
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Endpoint not found'}), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    logger.error(f"Internal server error: {error}")
+    return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Health check endpoint"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.utcnow().isoformat(),
+        'version': '1.0.0'
+    }), 200
+
+@app.route('/api/calculate', methods=['POST'])
+def api_calculate():
+    """Main calculation endpoint"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+        
+        operation_type = data.get('operation_type')
+        input_value = data.get('input_value')
+        session_id = data.get('session_id')
+        
+        if not operation_type or input_value is None:
+            return jsonify({'error': 'operation_type and input_value are required'}), 400
+        
+        # Create model and controller
+        model = Model(db_manager, session_id)
+        controller = Controller(db_manager)
+        controller.setModel(model)
+        
+        # Get client info
+        ip_address = request.remote_addr
+        user_agent = request.headers.get('User-Agent')
+        
+        # Perform calculation
+        result = controller.calculate(
+            operation_type=operation_type,
+            input_value=str(input_value),
+            ip_address=ip_address,
+            user_agent=user_agent
+        )
+        
+        if result['status'] == 'success':
+            return jsonify(result), 200
+        else:
+            return jsonify(result), 400
+            
+    except Exception as e:
+        logger.error(f"API calculation error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/calculator', methods=['POST'])
+def api_calculator():
+    """Calculator-specific endpoint"""
+    try:
+        data = request.get_json()
+        if not data or 'expression' not in data:
+            return jsonify({'error': 'expression is required'}), 400
+        
+        data['operation_type'] = 'calculator'
+        data['input_value'] = data.pop('expression')
+        
+        # Reuse the main calculate endpoint logic
+        return api_calculate()
+        
+    except Exception as e:
+        logger.error(f"Calculator API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/fibonacci', methods=['POST'])
+def api_fibonacci():
+    """Fibonacci-specific endpoint"""
+    try:
+        data = request.get_json()
+        if not data or 'n' not in data:
+            return jsonify({'error': 'n is required'}), 400
+        
+        data['operation_type'] = 'fibonacci'
+        data['input_value'] = data.pop('n')
+        
+        return api_calculate()
+        
+    except Exception as e:
+        logger.error(f"Fibonacci API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/factorial', methods=['POST'])
+def api_factorial():
+    """Factorial-specific endpoint"""
+    try:
+        data = request.get_json()
+        if not data or 'n' not in data:
+            return jsonify({'error': 'n is required'}), 400
+        
+        data['operation_type'] = 'factorial'
+        data['input_value'] = data.pop('n')
+        
+        return api_calculate()
+        
+    except Exception as e:
+        logger.error(f"Factorial API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/history', methods=['GET'])
+def api_history():
+    """Get request history with pagination"""
+    try:
+        limit = min(int(request.args.get('limit', 50)), 1000)  # Max 1000 records
+        offset = int(request.args.get('offset', 0))
+        
+        history = db_manager.get_request_history(limit=limit, offset=offset)
+        
+        return jsonify({
+            'history': history,
+            'limit': limit,
+            'offset': offset,
+            'count': len(history)
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"History API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/analytics', methods=['GET'])
+def api_analytics():
+    """Get basic analytics"""
+    try:
+        analytics = db_manager.get_analytics()
+        return jsonify(analytics), 200
+        
+    except Exception as e:
+        logger.error(f"Analytics API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 # ----------------------------- ROUTING --------------------------
 
 @app.route("/", methods=["GET", "POST"])
@@ -441,12 +853,12 @@ def index():
     mainwindow.addDisplayBox(thirddb)
 
     # Model and Controller
-    model = Model()
+    model = Model(db_manager)  # Pass db_manager to Model
     model.setCalculatorView(firstdb) # set the calculator view to the first display box
     model.setFibonacciView(seconddb) # set the fibonacci view to the second display box
     model.setFactorialView(thirddb)  # set the factorial view to the third display box
 
-    chCntrl = Controller()
+    chCntrl = Controller(db_manager)  # Pass db_manager to Controller
     chCntrl.setModel(model)
 
     # Radio Group
