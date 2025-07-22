@@ -302,6 +302,66 @@ class DatabaseManager:
                 'status_stats': status_stats
             }
 
+# ----------------------------- CACHE SYSTEM ------------------------------------
+
+class ExpressionCache:
+    """Cache system for storing calculated expressions and their results"""
+    
+    def __init__(self):
+        self.cache = {
+            'calculator': {},  # Cache for calculator expressions
+            'fibonacci': {},   # Cache for fibonacci numbers
+            'factorial': {}    # Cache for factorial
+        }
+        self.hit_count = 0
+        self.miss_count = 0
+    
+    def get(self, operation_type: str, input_value: str):
+        """Get cached result if exists"""
+        cache_key = str(input_value).strip()
+        if cache_key in self.cache[operation_type]:
+            self.hit_count += 1
+            logger.info(f"Cache HIT for {operation_type}: {input_value}")
+            return self.cache[operation_type][cache_key]
+        
+        self.miss_count += 1
+        logger.info(f"Cache MISS for {operation_type}: {input_value}")
+        return None
+    
+    def set(self, operation_type: str, input_value: str, result):
+        """Store result in cache"""
+        cache_key = str(input_value).strip()
+        self.cache[operation_type][cache_key] = result
+        logger.info(f"Cache STORED for {operation_type}: {input_value} = {result}")
+    
+    def get_stats(self):
+        """Get cache statistics"""
+        total_requests = self.hit_count + self.miss_count
+        hit_rate = (self.hit_count / total_requests * 100) if total_requests > 0 else 0
+        
+        return {
+            'hit_count': self.hit_count,
+            'miss_count': self.miss_count,
+            'hit_rate': round(hit_rate, 2),
+            'cache_sizes': {
+                'calculator': len(self.cache['calculator']),
+                'fibonacci': len(self.cache['fibonacci']),
+                'factorial': len(self.cache['factorial'])
+            }
+        }
+    
+    def clear_cache(self, operation_type: str = None):
+        """Clear cache for specific operation or all"""
+        if operation_type and operation_type in self.cache:
+            self.cache[operation_type].clear()
+            logger.info(f"Cache cleared for {operation_type}")
+        else:
+            for cache_type in self.cache:
+                self.cache[cache_type].clear()
+            self.hit_count = 0
+            self.miss_count = 0
+            logger.info("All caches cleared")
+
 
 # ----------------------------- CLASSES ---------------------------------------
 
@@ -401,9 +461,11 @@ class MyEditBox:
 # ----------------------------- MODEL CLASS ------------------------------------
 
 class Model:
-    def __init__(self, db_manager: DatabaseManager, session_id: str = None):
+    def __init__(self, db_manager: DatabaseManager, session_id: str = None, cache: ExpressionCache = None):
         self.db_manager = db_manager
         self.session_id = session_id or str(uuid.uuid4())
+        # Use provided cache or create new one (for backwards compatibility)
+        self.cache = cache if cache is not None else ExpressionCache()
         
         # Load session data
         session_data = self.db_manager.get_session(self.session_id)
@@ -448,6 +510,14 @@ class Model:
     
     def get_session_id(self):
         return self.session_id
+    
+    def get_cache_stats(self):
+        """Get cache statistics"""
+        return self.cache.get_stats()
+    
+    def clear_cache(self, operation_type: str = None):
+        """Clear cache"""
+        self.cache.clear_cache(operation_type)
 
 # ----------------------------- CONTROLLER CLASS -------------------------------
 
@@ -473,26 +543,73 @@ class Controller:
         if self.model.getLastChoice() == 1:  # check if the option corresponds to the calculator number option
             try:
                 n = aString.strip()
+                
+                # Check cache first
+                cached_result = self.model.cache.get('calculator', n)
+                if cached_result is not None:
+                    self.model.calculatorOutputView.setText(f"{cached_result} (cached)")
+                    return cached_result
+                
+                # Calculate if not in cache
                 result = process_expression(n)
+                
+                # Store in cache
+                self.model.cache.set('calculator', n, result)
+                
                 self.model.calculatorOutputView.setText(str(result))
+                return result
             except Exception as e:
-                self.model.calculatorOutputView.setText("Invalid expression")
+                error_msg = "Invalid expression"
+                self.model.calculatorOutputView.setText(error_msg)
+                return error_msg
 
         elif self.model.getLastChoice() == 2: # check if the option corresponds to the n-th fibonacci number option
             try:
                 n = int(aString.strip())
+                
+                # Check cache first
+                cached_result = self.model.cache.get('fibonacci', str(n))
+                if cached_result is not None:
+                    self.model.fibonacciOutputView.setText(f"{cached_result} (cached)")
+                    return cached_result
+                
+                # Calculate if not in cache
                 fib = self.fibonnaci(n)
+                
+                # Store in cache
+                self.model.cache.set('fibonacci', str(n), fib)
+                
                 self.model.fibonacciOutputView.setText(str(fib))
+                return fib
             except Exception as e:
-                self.model.fibonacciOutputView.setText("Invalid input")
+                error_msg = "Invalid input"
+                self.model.fibonacciOutputView.setText(error_msg)
+                return error_msg
                 
         elif self.model.getLastChoice() == 3: # check if the option corresponds to factorial
             try:
                 n = int(aString.strip())
+                
+                # Check cache first
+                cached_result = self.model.cache.get('factorial', str(n))
+                if cached_result is not None:
+                    self.model.factorialOutputView.setText(f"{cached_result} (cached)")
+                    return cached_result
+                
+                # Calculate if not in cache
                 factorial_result = self.factorial(n)
+                
+                # Store in cache
+                self.model.cache.set('factorial', str(n), factorial_result)
+                
                 self.model.factorialOutputView.setText(str(factorial_result))
+                return factorial_result
             except Exception as e:
-                self.model.factorialOutputView.setText("Invalid input")
+                error_msg = "Invalid input"
+                self.model.factorialOutputView.setText(error_msg)
+                return error_msg
+            
+        return "No operation selected"
     
     def fibonnaci(self, n):
         #base condition
@@ -527,8 +644,49 @@ class Controller:
             if operation_type not in operation_map:
                 raise ValueError(f"Invalid operation type: {operation_type}")
             
+            # Ensure display views are initialized to prevent 'NoneType' errors
+            if self.model.calculatorOutputView is None:
+                self.model.setCalculatorView(MyDisplayBox(Point(0, 0), 0, 0))
+            if self.model.fibonacciOutputView is None:
+                self.model.setFibonacciView(MyDisplayBox(Point(0, 0), 0, 0))
+            if self.model.factorialOutputView is None:
+                self.model.setFactorialView(MyDisplayBox(Point(0, 0), 0, 0))
+            
+            # Check cache first
+            cached_result = self.model.cache.get(operation_type, input_value)
+            if cached_result is not None:
+                # Log successful cached request
+                request_id = self.db_manager.log_request(
+                    operation_type=operation_type,
+                    input_value=input_value,
+                    result=f"{cached_result} (cached)",
+                    status="success_cached",
+                    ip_address=ip_address,
+                    user_agent=user_agent
+                )
+                
+                return {
+                    'request_id': request_id,
+                    'operation_type': operation_type,
+                    'input_value': input_value,
+                    'result': cached_result,
+                    'cached': True,
+                    'status': 'success',
+                    'session_id': self.model.get_session_id()
+                }
+            
+            # Calculate if not cached
             self.chControl(str(operation_map[operation_type]))
             result = self.inpControl(input_value)
+            
+            # extract the result from the view if it is not returned directly
+            if result is None:
+                if operation_type == "calculator":
+                    result = self.model.calculatorOutputView.getText()
+                elif operation_type == "fibonacci":
+                    result = self.model.fibonacciOutputView.getText()
+                elif operation_type == "factorial":
+                    result = self.model.factorialOutputView.getText()
             
             # Log successful request
             request_id = self.db_manager.log_request(
@@ -545,6 +703,7 @@ class Controller:
                 'operation_type': operation_type,
                 'input_value': input_value,
                 'result': result,
+                'cached': False,
                 'status': 'success',
                 'session_id': self.model.get_session_id()
             }
@@ -568,6 +727,7 @@ class Controller:
                 'operation_type': operation_type,
                 'input_value': input_value,
                 'error': error_message,
+                'cached': False,
                 'status': 'error',
                 'session_id': self.model.get_session_id()
             }
@@ -682,6 +842,9 @@ CORS(app)
 # Initialize database manager
 db_manager = DatabaseManager()
 
+# Initialize GLOBAL cache that persists between requests
+global_cache = ExpressionCache()
+
 # ----------------------------- API ENDPOINTS --------------------------------
 
 @app.errorhandler(404)
@@ -718,8 +881,8 @@ def api_calculate():
         if not operation_type or input_value is None:
             return jsonify({'error': 'operation_type and input_value are required'}), 400
         
-        # Create model and controller
-        model = Model(db_manager, session_id)
+        # Create model and controller with GLOBAL cache
+        model = Model(db_manager, session_id, global_cache)
         controller = Controller(db_manager)
         controller.setModel(model)
         
@@ -827,6 +990,47 @@ def api_analytics():
         logger.error(f"Analytics API error: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/cache/stats', methods=['GET'])
+def api_cache_stats():
+    """Get cache statistics"""
+    try:
+        # Use the global cache for stats
+        stats = global_cache.get_stats()
+        
+        return jsonify({
+            'cache_stats': stats,
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Cache stats API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/cache/clear', methods=['POST'])
+def api_cache_clear():
+    """Clear cache"""
+    try:
+        if request.content_type != 'application/json':
+            data = {}
+        else:
+            data = request.get_json() or {}
+
+        operation_type = data.get('operation_type')  # Optional: clear specific operation
+
+        # Clear the global cache
+        global_cache.clear_cache(operation_type)
+
+        message = f"Cache cleared for {operation_type}" if operation_type else "All caches cleared"
+
+        return jsonify({
+            'message': message,
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+
+    except Exception as e:
+        logger.error(f"Cache clear API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 # ----------------------------- ROUTING --------------------------
 
 @app.route("/", methods=["GET", "POST"])
@@ -852,8 +1056,8 @@ def index():
     mainwindow.addDisplayBox(seconddb)
     mainwindow.addDisplayBox(thirddb)
 
-    # Model and Controller
-    model = Model(db_manager)  # Pass db_manager to Model
+    # Model and Controller - Use global cache
+    model = Model(db_manager, cache=global_cache) 
     model.setCalculatorView(firstdb) # set the calculator view to the first display box
     model.setFibonacciView(seconddb) # set the fibonacci view to the second display box
     model.setFactorialView(thirddb)  # set the factorial view to the third display box
