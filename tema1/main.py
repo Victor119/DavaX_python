@@ -680,11 +680,10 @@ class Controller:
             logger.error(error_msg)
             
             return error_msg
-    
+
     def _handle_calculator(self, aString: str, overall_start_time: float):
         """Handle calculator operation with detailed logging"""
         calc_start_time = time.time()
-        
         try:
             n = aString.strip()
             
@@ -700,7 +699,6 @@ class Controller:
                 return cached_result
             
             # Calculate if not in cache
-            from python_calculator.calculator import process_expression
             result = process_expression(n)
             
             calc_time = (time.time() - calc_start_time) * 1000
@@ -732,7 +730,6 @@ class Controller:
     def _handle_fibonacci(self, aString: str, overall_start_time: float):
         """Handle fibonacci operation with detailed logging"""
         calc_start_time = time.time()
-        
         try:
             n = int(aString.strip())
             
