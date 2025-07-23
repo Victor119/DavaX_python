@@ -7,6 +7,7 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 from contextlib import contextmanager
+import time
 
 # add path to folder python_calculator
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "python_calculator")))
@@ -131,16 +132,66 @@ HTML_TEMPLATE = """
 
 # ----------------------------- LOGGING CONFIGURATION ---------------------------
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('calculator_api.log'),
-        logging.StreamHandler()
-    ]
-)
+def setup_enhanced_logging():
+    """Setup enhanced logging system with separate files for different log levels"""
+    
+    # Create logs directory if it doesn't exist
+    logs_dir = "logs"
+    if not os.path.exists(logs_dir):
+        os.makedirs(logs_dir)
+    
+    # Remove existing handlers to avoid duplication
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    
+    # Create formatters
+    detailed_formatter = logging.Formatter(
+        '%(asctime)s | %(levelname)-8s | %(name)-20s | %(funcName)-20s | %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    simple_formatter = logging.Formatter(
+        '%(asctime)s | %(levelname)-8s | %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    
+    # Main application log (all levels)
+    main_handler = logging.FileHandler(os.path.join(logs_dir, 'calculator_app.log'))
+    main_handler.setLevel(logging.DEBUG)
+    main_handler.setFormatter(detailed_formatter)
+    
+    # Performance and calculation log (specific for calculations)
+    calc_handler = logging.FileHandler(os.path.join(logs_dir, 'calculations.log'))
+    calc_handler.setLevel(logging.INFO)
+    calc_handler.setFormatter(simple_formatter)
+    
+    # Error log (errors only)
+    error_handler = logging.FileHandler(os.path.join(logs_dir, 'errors.log'))
+    error_handler.setLevel(logging.ERROR)
+    error_handler.setFormatter(detailed_formatter)
+    
+    # Console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(simple_formatter)
+    
+    # Setup root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG)
+    root_logger.addHandler(main_handler)
+    root_logger.addHandler(error_handler)
+    root_logger.addHandler(console_handler)
+    
+    # Setup calculation logger
+    calc_logger = logging.getLogger('calculations')
+    calc_logger.setLevel(logging.INFO)
+    calc_logger.addHandler(calc_handler)
+    calc_logger.propagate = False  # Don't propagate to root logger to avoid duplication
+    
+    return root_logger, calc_logger
 
-logger = logging.getLogger(__name__)
+# Initialize enhanced logging
+logger, calc_logger = setup_enhanced_logging()
 
 # ----------------------------- DATABASE LAYER -------------------------------
 
@@ -305,7 +356,7 @@ class DatabaseManager:
 # ----------------------------- CACHE SYSTEM ------------------------------------
 
 class ExpressionCache:
-    """Cache system for storing calculated expressions and their results"""
+    """Enhanced cache system with detailed logging"""
     
     def __init__(self):
         self.cache = {
@@ -317,29 +368,56 @@ class ExpressionCache:
         self.miss_count = 0
     
     def get(self, operation_type: str, input_value: str):
-        """Get cached result if exists"""
+        """Get cached result if exists with detailed logging"""
         cache_key = str(input_value).strip()
+        start_time = time.time()
+        
         if cache_key in self.cache[operation_type]:
             self.hit_count += 1
-            logger.info(f"Cache HIT for {operation_type}: {input_value}")
-            return self.cache[operation_type][cache_key]
+            access_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+            
+            result = self.cache[operation_type][cache_key]
+            
+            # Log cache hit
+            calc_logger.info(f"CACHE_HIT | Operation: {operation_type} | Input: '{input_value}' | "
+                        f"Result: {result} | Access_Time: {access_time:.2f}ms")
+            
+            logger.debug(f"Cache HIT for {operation_type}: {input_value} -> {result}")
+            
+            return result
         
         self.miss_count += 1
-        logger.info(f"Cache MISS for {operation_type}: {input_value}")
+        access_time = (time.time() - start_time) * 1000
+        
+        # Log cache miss
+        calc_logger.info(f"CACHE_MISS | Operation: {operation_type} | Input: '{input_value}' | "
+                    f"Access_Time: {access_time:.2f}ms")
+        
+        logger.debug(f"Cache MISS for {operation_type}: {input_value}")
+        
         return None
     
     def set(self, operation_type: str, input_value: str, result):
-        """Store result in cache"""
+        """Store result in cache with logging"""
         cache_key = str(input_value).strip()
+        start_time = time.time()
+        
         self.cache[operation_type][cache_key] = result
-        logger.info(f"Cache STORED for {operation_type}: {input_value} = {result}")
+        
+        store_time = (time.time() - start_time) * 1000
+        
+        # Log cache store
+        calc_logger.info(f"CACHE_STORE | Operation: {operation_type} | Input: '{input_value}' | "
+                    f"Result: {result} | Store_Time: {store_time:.2f}ms")
+        
+        logger.debug(f"Cache STORED for {operation_type}: {input_value} = {result}")
     
     def get_stats(self):
         """Get cache statistics"""
         total_requests = self.hit_count + self.miss_count
         hit_rate = (self.hit_count / total_requests * 100) if total_requests > 0 else 0
         
-        return {
+        stats = {
             'hit_count': self.hit_count,
             'miss_count': self.miss_count,
             'hit_rate': round(hit_rate, 2),
@@ -349,18 +427,27 @@ class ExpressionCache:
                 'factorial': len(self.cache['factorial'])
             }
         }
+        
+        logger.info(f"Cache statistics requested: {stats}")
+        return stats
     
     def clear_cache(self, operation_type: str = None):
-        """Clear cache for specific operation or all"""
+        """Clear cache for specific operation or all with logging"""
         if operation_type and operation_type in self.cache:
+            cleared_count = len(self.cache[operation_type])
             self.cache[operation_type].clear()
-            logger.info(f"Cache cleared for {operation_type}")
+            
+            calc_logger.info(f"CACHE_CLEAR | Operation: {operation_type} | Cleared_Items: {cleared_count}")
+            logger.info(f"Cache cleared for {operation_type}, {cleared_count} items removed")
         else:
+            total_cleared = sum(len(cache) for cache in self.cache.values())
             for cache_type in self.cache:
                 self.cache[cache_type].clear()
             self.hit_count = 0
             self.miss_count = 0
-            logger.info("All caches cleared")
+            
+            calc_logger.info(f"CACHE_CLEAR_ALL | Cleared_Items: {total_cleared}")
+            logger.info(f"All caches cleared, {total_cleared} items removed")
 
 
 # ----------------------------- CLASSES ---------------------------------------
@@ -530,110 +617,258 @@ class Controller:
         self.model = aModel
 
     def chControl(self, aString: str): # apply the action from the GUI to the model
+        """Apply the action from the GUI to the model with logging"""
+        start_time = time.time()
         try:
             ch = int(aString.strip().split()[-1])
             self.model.setLastChoice(ch)
+            
+            execution_time = (time.time() - start_time) * 1000
+            calc_logger.info(f"CHOICE_CHANGE | Choice: {ch} | Execution_Time: {execution_time:.2f}ms")
+            logger.debug(f"Choice changed to {ch}")
+            
         except Exception as e:
-            print("Invalid input to Controller.chControl:", aString, e)
+            execution_time = (time.time() - start_time) * 1000
+            error_msg = f"Invalid input to Controller.chControl: {aString}"
             
-    def inpControl(self, aString: str): # apply the action from the GUI to the model
-        self.model.setLastInput(aString)
+            calc_logger.error(f"CHOICE_ERROR | Input: '{aString}' | Error: {str(e)} | "
+                            f"Execution_Time: {execution_time:.2f}ms")
+            logger.error(f"{error_msg}, Error: {e}")
+            
+            print(error_msg, e)
+            
+    def inpControl(self, aString: str):
+        """Apply the action from the GUI to the model with comprehensive logging"""
+        overall_start_time = time.time()
+        operation_type = None
         
-        #Compute based on choice and update view accordingly
-        if self.model.getLastChoice() == 1:  # check if the option corresponds to the calculator number option
-            try:
-                n = aString.strip()
-                
-                # Check cache first
-                cached_result = self.model.cache.get('calculator', n)
-                if cached_result is not None:
-                    self.model.calculatorOutputView.setText(f"{cached_result} (cached)")
-                    return cached_result
-                
-                # Calculate if not in cache
-                result = process_expression(n)
-                
-                # Store in cache
-                self.model.cache.set('calculator', n, result)
-                
-                self.model.calculatorOutputView.setText(str(result))
-                return result
-            except Exception as e:
-                error_msg = "Invalid expression"
-                self.model.calculatorOutputView.setText(error_msg)
-                return error_msg
-
-        elif self.model.getLastChoice() == 2: # check if the option corresponds to the n-th fibonacci number option
-            try:
-                n = int(aString.strip())
-                
-                # Check cache first
-                cached_result = self.model.cache.get('fibonacci', str(n))
-                if cached_result is not None:
-                    self.model.fibonacciOutputView.setText(f"{cached_result} (cached)")
-                    return cached_result
-                
-                # Calculate if not in cache
-                fib = self.fibonnaci(n)
-                
-                # Store in cache
-                self.model.cache.set('fibonacci', str(n), fib)
-                
-                self.model.fibonacciOutputView.setText(str(fib))
-                return fib
-            except Exception as e:
-                error_msg = "Invalid input"
-                self.model.fibonacciOutputView.setText(error_msg)
-                return error_msg
-                
-        elif self.model.getLastChoice() == 3: # check if the option corresponds to factorial
-            try:
-                n = int(aString.strip())
-                
-                # Check cache first
-                cached_result = self.model.cache.get('factorial', str(n))
-                if cached_result is not None:
-                    self.model.factorialOutputView.setText(f"{cached_result} (cached)")
-                    return cached_result
-                
-                # Calculate if not in cache
-                factorial_result = self.factorial(n)
-                
-                # Store in cache
-                self.model.cache.set('factorial', str(n), factorial_result)
-                
-                self.model.factorialOutputView.setText(str(factorial_result))
-                return factorial_result
-            except Exception as e:
-                error_msg = "Invalid input"
-                self.model.factorialOutputView.setText(error_msg)
-                return error_msg
+        try:
+            self.model.setLastInput(aString)
+            choice = self.model.getLastChoice()
             
-        return "No operation selected"
+            # Determine operation type
+            if choice == 1:
+                operation_type = "calculator"
+            elif choice == 2:
+                operation_type = "fibonacci"
+            elif choice == 3:
+                operation_type = "factorial"
+            
+            calc_logger.info(f"CALCULATION_START | Operation: {operation_type} | Input: '{aString}' | Choice: {choice}")
+            
+            if choice == 1:  # Calculator
+                return self._handle_calculator(aString, overall_start_time)
+            elif choice == 2:  # Fibonacci
+                return self._handle_fibonacci(aString, overall_start_time)
+            elif choice == 3:  # Factorial
+                return self._handle_factorial(aString, overall_start_time)
+            else:
+                error_msg = "No operation selected"
+                execution_time = (time.time() - overall_start_time) * 1000
+                
+                calc_logger.warning(f"NO_OPERATION | Choice: {choice} | Input: '{aString}' | "
+                                f"Execution_Time: {execution_time:.2f}ms")
+                
+                return error_msg
+                
+        except Exception as e:
+            execution_time = (time.time() - overall_start_time) * 1000
+            error_msg = f"Unexpected error in inpControl: {str(e)}"
+            
+            calc_logger.error(f"UNEXPECTED_ERROR | Operation: {operation_type} | Input: '{aString}' | "
+                            f"Error: {str(e)} | Execution_Time: {execution_time:.2f}ms")
+            logger.error(error_msg)
+            
+            return error_msg
     
+    def _handle_calculator(self, aString: str, overall_start_time: float):
+        """Handle calculator operation with detailed logging"""
+        calc_start_time = time.time()
+        
+        try:
+            n = aString.strip()
+            
+            # Check cache first
+            cached_result = self.model.cache.get('calculator', n)
+            if cached_result is not None:
+                self.model.calculatorOutputView.setText(f"{cached_result} (cached)")
+                
+                total_time = (time.time() - overall_start_time) * 1000
+                calc_logger.info(f"CALCULATION_SUCCESS_CACHED | Operation: calculator | Input: '{n}' | "
+                            f"Result: {cached_result} | Total_Time: {total_time:.2f}ms")
+                
+                return cached_result
+            
+            # Calculate if not in cache
+            from python_calculator.calculator import process_expression
+            result = process_expression(n)
+            
+            calc_time = (time.time() - calc_start_time) * 1000
+            
+            # Store in cache
+            self.model.cache.set('calculator', n, result)
+            
+            self.model.calculatorOutputView.setText(str(result))
+            
+            total_time = (time.time() - overall_start_time) * 1000
+            calc_logger.info(f"CALCULATION_SUCCESS | Operation: calculator | Input: '{n}' | "
+                        f"Result: {result} | Calc_Time: {calc_time:.2f}ms | Total_Time: {total_time:.2f}ms")
+            
+            return result
+            
+        except Exception as e:
+            error_msg = "Invalid expression"
+            calc_time = (time.time() - calc_start_time) * 1000
+            total_time = (time.time() - overall_start_time) * 1000
+            
+            self.model.calculatorOutputView.setText(error_msg)
+            
+            calc_logger.error(f"CALCULATION_ERROR | Operation: calculator | Input: '{aString}' | "
+                            f"Error: {str(e)} | Calc_Time: {calc_time:.2f}ms | Total_Time: {total_time:.2f}ms")
+            logger.error(f"Calculator error for input '{aString}': {e}")
+            
+            return error_msg
+    
+    def _handle_fibonacci(self, aString: str, overall_start_time: float):
+        """Handle fibonacci operation with detailed logging"""
+        calc_start_time = time.time()
+        
+        try:
+            n = int(aString.strip())
+            
+            # Check cache first
+            cached_result = self.model.cache.get('fibonacci', str(n))
+            if cached_result is not None:
+                self.model.fibonacciOutputView.setText(f"{cached_result} (cached)")
+                
+                total_time = (time.time() - overall_start_time) * 1000
+                calc_logger.info(f"CALCULATION_SUCCESS_CACHED | Operation: fibonacci | Input: {n} | "
+                            f"Result: {cached_result} | Total_Time: {total_time:.2f}ms")
+                
+                return cached_result
+            
+            # Calculate if not in cache
+            fib = self.fibonnaci(n)
+            
+            calc_time = (time.time() - calc_start_time) * 1000
+            
+            # Store in cache
+            self.model.cache.set('fibonacci', str(n), fib)
+            
+            self.model.fibonacciOutputView.setText(str(fib))
+            
+            total_time = (time.time() - overall_start_time) * 1000
+            calc_logger.info(f"CALCULATION_SUCCESS | Operation: fibonacci | Input: {n} | "
+                        f"Result: {fib} | Calc_Time: {calc_time:.2f}ms | Total_Time: {total_time:.2f}ms")
+            
+            return fib
+            
+        except Exception as e:
+            error_msg = "Invalid input"
+            calc_time = (time.time() - calc_start_time) * 1000
+            total_time = (time.time() - overall_start_time) * 1000
+            
+            self.model.fibonacciOutputView.setText(error_msg)
+            
+            calc_logger.error(f"CALCULATION_ERROR | Operation: fibonacci | Input: '{aString}' | "
+                            f"Error: {str(e)} | Calc_Time: {calc_time:.2f}ms | Total_Time: {total_time:.2f}ms")
+            logger.error(f"Fibonacci error for input '{aString}': {e}")
+            
+            return error_msg
+    
+    def _handle_factorial(self, aString: str, overall_start_time: float):
+        """Handle factorial operation with detailed logging"""
+        calc_start_time = time.time()
+        
+        try:
+            n = int(aString.strip())
+            
+            # Check cache first
+            cached_result = self.model.cache.get('factorial', str(n))
+            if cached_result is not None:
+                self.model.factorialOutputView.setText(f"{cached_result} (cached)")
+                
+                total_time = (time.time() - overall_start_time) * 1000
+                calc_logger.info(f"CALCULATION_SUCCESS_CACHED | Operation: factorial | Input: {n} | "
+                            f"Result: {cached_result} | Total_Time: {total_time:.2f}ms")
+                
+                return cached_result
+            
+            # Calculate if not in cache
+            factorial_result = self.factorial(n)
+            
+            calc_time = (time.time() - calc_start_time) * 1000
+            
+            # Store in cache
+            self.model.cache.set('factorial', str(n), factorial_result)
+            
+            self.model.factorialOutputView.setText(str(factorial_result))
+            
+            total_time = (time.time() - overall_start_time) * 1000
+            calc_logger.info(f"CALCULATION_SUCCESS | Operation: factorial | Input: {n} | "
+                        f"Result: {factorial_result} | Calc_Time: {calc_time:.2f}ms | Total_Time: {total_time:.2f}ms")
+            
+            return factorial_result
+            
+        except Exception as e:
+            error_msg = "Invalid input"
+            calc_time = (time.time() - calc_start_time) * 1000
+            total_time = (time.time() - overall_start_time) * 1000
+            
+            self.model.factorialOutputView.setText(error_msg)
+            
+            calc_logger.error(f"CALCULATION_ERROR | Operation: factorial | Input: '{aString}' | "
+                            f"Error: {str(e)} | Calc_Time: {calc_time:.2f}ms | Total_Time: {total_time:.2f}ms")
+            logger.error(f"Factorial error for input '{aString}': {e}")
+            
+            return error_msg
+
     def fibonnaci(self, n):
-        #base condition
+        """Fibonacci calculation with logging for large numbers"""
+        if n > 100:  # Log performance for large fibonacci numbers
+            start_time = time.time()
+            logger.info(f"Computing large Fibonacci number: {n}")
+        
+        # Base condition
         if(n <= 1):
             return n
         
-        #problem broken down into 2 function calls
-        #and their results combined and returned
+        # Problem broken down into 2 function calls
         last = self.fibonnaci(n - 1)
         slast = self.fibonnaci(n - 2)
         
-        return last + slast
+        result = last + slast
+        
+        if n > 100:
+            execution_time = (time.time() - start_time) * 1000
+            logger.info(f"Large Fibonacci {n} computed in {execution_time:.2f}ms")
+        
+        return result
 
-    def factorial(self, n):  # the function for factorial
+    def factorial(self, n):
+        """Factorial calculation with logging"""
         if n < 0:
+            logger.warning(f"Negative factorial requested: {n}")
             return "Error: negative number"
+        
+        if n > 1000:  # Log for large factorials
+            logger.info(f"Computing large factorial: {n}")
+        
         P = 1
         for i in range(1, n + 1):
             P *= i
         return P
     
     def calculate(self, operation_type: str, input_value: str, ip_address: str = None, user_agent: str = None):
-        """Main calculation method for API calls"""
+        """Main calculation method for API calls with comprehensive logging"""
+        api_start_time = time.time()
+        request_id = None
+        
         try:
+            # Log API request start
+            calc_logger.info(f"API_REQUEST_START | Operation: {operation_type} | Input: '{input_value}' | "
+                        f"IP: {ip_address} | User_Agent: {user_agent}")
+            
             # Set operation type
             operation_map = {
                 'calculator': 1,
@@ -655,6 +890,8 @@ class Controller:
             # Check cache first
             cached_result = self.model.cache.get(operation_type, input_value)
             if cached_result is not None:
+                api_time = (time.time() - api_start_time) * 1000
+                
                 # Log successful cached request
                 request_id = self.db_manager.log_request(
                     operation_type=operation_type,
@@ -665,6 +902,9 @@ class Controller:
                     user_agent=user_agent
                 )
                 
+                calc_logger.info(f"API_REQUEST_SUCCESS_CACHED | Operation: {operation_type} | Input: '{input_value}' | "
+                            f"Result: {cached_result} | API_Time: {api_time:.2f}ms | Request_ID: {request_id}")
+                
                 return {
                     'request_id': request_id,
                     'operation_type': operation_type,
@@ -672,14 +912,19 @@ class Controller:
                     'result': cached_result,
                     'cached': True,
                     'status': 'success',
-                    'session_id': self.model.get_session_id()
+                    'session_id': self.model.get_session_id(),
+                    'execution_time_ms': api_time
                 }
             
             # Calculate if not cached
+            calc_start_time = time.time()
+            
             self.chControl(str(operation_map[operation_type]))
             result = self.inpControl(input_value)
             
-            # extract the result from the view if it is not returned directly
+            calc_time = (time.time() - calc_start_time) * 1000
+            
+            # Extract the result from the view if it is not returned directly
             if result is None:
                 if operation_type == "calculator":
                     result = self.model.calculatorOutputView.getText()
@@ -687,6 +932,8 @@ class Controller:
                     result = self.model.fibonacciOutputView.getText()
                 elif operation_type == "factorial":
                     result = self.model.factorialOutputView.getText()
+            
+            api_time = (time.time() - api_start_time) * 1000
             
             # Log successful request
             request_id = self.db_manager.log_request(
@@ -698,6 +945,10 @@ class Controller:
                 user_agent=user_agent
             )
             
+            calc_logger.info(f"API_REQUEST_SUCCESS | Operation: {operation_type} | Input: '{input_value}' | "
+                        f"Result: {result} | Calc_Time: {calc_time:.2f}ms | API_Time: {api_time:.2f}ms | "
+                        f"Request_ID: {request_id}")
+            
             return {
                 'request_id': request_id,
                 'operation_type': operation_type,
@@ -705,12 +956,14 @@ class Controller:
                 'result': result,
                 'cached': False,
                 'status': 'success',
-                'session_id': self.model.get_session_id()
+                'session_id': self.model.get_session_id(),
+                'execution_time_ms': api_time,
+                'calculation_time_ms': calc_time
             }
             
         except Exception as e:
+            api_time = (time.time() - api_start_time) * 1000
             error_message = str(e)
-            logger.error(f"Calculation error: {error_message}")
             
             # Log failed request
             request_id = self.db_manager.log_request(
@@ -722,6 +975,10 @@ class Controller:
                 user_agent=user_agent
             )
             
+            calc_logger.error(f"API_REQUEST_ERROR | Operation: {operation_type} | Input: '{input_value}' | "
+                            f"Error: {error_message} | API_Time: {api_time:.2f}ms | Request_ID: {request_id}")
+            logger.error(f"API Calculation error: {error_message}")
+            
             return {
                 'request_id': request_id,
                 'operation_type': operation_type,
@@ -729,7 +986,8 @@ class Controller:
                 'error': error_message,
                 'cached': False,
                 'status': 'error',
-                'session_id': self.model.get_session_id()
+                'session_id': self.model.get_session_id(),
+                'execution_time_ms': api_time
             }
 
 # ----------------------------- VIEW-CONTROLLER ASSOCIATION --------------------
@@ -867,19 +1125,29 @@ def health_check():
 
 @app.route('/api/calculate', methods=['POST'])
 def api_calculate():
-    """Main calculation endpoint"""
+    """Main calculation endpoint with enhanced logging"""
+    request_start_time = time.time()
+    client_ip = request.remote_addr
+    
     try:
         data = request.get_json()
         
+        # Log request received
+        logger.info(f"API request received from {client_ip}: {data}")
+        
         if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
+            error_msg = 'No JSON data provided'
+            logger.warning(f"Bad request from {client_ip}: {error_msg}")
+            return jsonify({'error': error_msg}), 400
         
         operation_type = data.get('operation_type')
         input_value = data.get('input_value')
         session_id = data.get('session_id')
         
         if not operation_type or input_value is None:
-            return jsonify({'error': 'operation_type and input_value are required'}), 400
+            error_msg = 'operation_type and input_value are required'
+            logger.warning(f"Bad request from {client_ip}: {error_msg}")
+            return jsonify({'error': error_msg}), 400
         
         # Create model and controller with GLOBAL cache
         model = Model(db_manager, session_id, global_cache)
@@ -898,13 +1166,20 @@ def api_calculate():
             user_agent=user_agent
         )
         
+        request_time = (time.time() - request_start_time) * 1000
+        
         if result['status'] == 'success':
+            logger.info(f"API request completed successfully in {request_time:.2f}ms for {client_ip}")
             return jsonify(result), 200
         else:
+            logger.warning(f"API request failed in {request_time:.2f}ms for {client_ip}: {result.get('error', 'Unknown error')}")
             return jsonify(result), 400
             
     except Exception as e:
-        logger.error(f"API calculation error: {e}")
+        request_time = (time.time() - request_start_time) * 1000
+        error_msg = f'Internal server error: {str(e)}'
+        
+        logger.error(f"API calculation error in {request_time:.2f}ms for {client_ip}: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/api/calculator', methods=['POST'])
@@ -1008,7 +1283,10 @@ def api_cache_stats():
 
 @app.route('/api/cache/clear', methods=['POST'])
 def api_cache_clear():
-    """Clear cache"""
+    """Clear cache with enhanced logging"""
+    request_start_time = time.time()
+    client_ip = request.remote_addr
+    
     try:
         if request.content_type != 'application/json':
             data = {}
@@ -1016,19 +1294,26 @@ def api_cache_clear():
             data = request.get_json() or {}
 
         operation_type = data.get('operation_type')  # Optional: clear specific operation
+        
+        logger.info(f"Cache clear request from {client_ip} for operation: {operation_type or 'all'}")
 
         # Clear the global cache
         global_cache.clear_cache(operation_type)
 
         message = f"Cache cleared for {operation_type}" if operation_type else "All caches cleared"
+        request_time = (time.time() - request_start_time) * 1000
+        
+        logger.info(f"Cache clear completed in {request_time:.2f}ms for {client_ip}")
 
         return jsonify({
             'message': message,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.utcnow().isoformat(),
+            'execution_time_ms': request_time
         }), 200
 
     except Exception as e:
-        logger.error(f"Cache clear API error: {e}")
+        request_time = (time.time() - request_start_time) * 1000
+        logger.error(f"Cache clear error in {request_time:.2f}ms for {client_ip}: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
 # ----------------------------- ROUTING --------------------------
