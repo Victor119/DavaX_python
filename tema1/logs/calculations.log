@@ -1,0 +1,174 @@
+2025-07-23 11:01:56 | INFO     | CHOICE_CHANGE | Choice: 2 | Execution_Time: 6.04ms
+2025-07-23 11:01:56 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '4' | Choice: 2
+2025-07-23 11:01:56 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '4' | Access_Time: 0.00ms
+2025-07-23 11:01:56 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '4' | Result: 3 | Store_Time: 0.00ms
+2025-07-23 11:01:56 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 4 | Result: 3 | Calc_Time: 0.44ms | Total_Time: 8.26ms
+2025-07-23 14:28:12 | INFO     | CHOICE_CHANGE | Choice: 1 | Execution_Time: 5.42ms
+2025-07-23 14:28:12 | INFO     | CALCULATION_START | Operation: calculator | Input: '3 + 5 ' | Choice: 1
+2025-07-23 14:28:12 | INFO     | CACHE_MISS | Operation: calculator | Input: '3 + 5' | Access_Time: 0.00ms
+2025-07-23 14:28:12 | INFO     | CACHE_STORE | Operation: calculator | Input: '3 + 5' | Result: [8.0] | Store_Time: 0.00ms
+2025-07-23 14:28:12 | INFO     | CALCULATION_SUCCESS | Operation: calculator | Input: '3 + 5' | Result: [8.0] | Calc_Time: 4.03ms | Total_Time: 10.53ms
+2025-07-23 16:13:13 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 6.06ms
+2025-07-23 16:13:13 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '51' | Choice: 2
+2025-07-23 16:13:13 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '51' | Access_Time: 0.00ms
+2025-07-23 16:13:47 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 139.93ms
+2025-07-23 16:13:47 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '5' | Choice: 2
+2025-07-23 16:13:47 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '5' | Access_Time: 0.00ms
+2025-07-23 16:13:47 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '5' | Result: 5 | Store_Time: 0.00ms
+2025-07-23 16:13:47 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 5 | Result: 5 | Calc_Time: 0.09ms | Total_Time: 198.29ms
+2025-07-23 16:13:53 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 225.92ms
+2025-07-23 16:13:54 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '51' | Choice: 2
+2025-07-23 16:13:54 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '51' | Access_Time: 0.00ms
+2025-07-23 16:14:15 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 343.81ms
+2025-07-23 16:14:16 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '49' | Choice: 2
+2025-07-23 16:14:16 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '49' | Access_Time: 0.00ms
+2025-07-23 16:14:29 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 733.24ms
+2025-07-23 16:14:29 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '10' | Choice: 2
+2025-07-23 16:14:29 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '10' | Access_Time: 0.00ms
+2025-07-23 16:14:29 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '10' | Result: 55 | Store_Time: 0.00ms
+2025-07-23 16:14:29 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 10 | Result: 55 | Calc_Time: 16.14ms | Total_Time: 771.43ms
+2025-07-23 16:14:36 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 423.08ms
+2025-07-23 16:14:37 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '12' | Choice: 2
+2025-07-23 16:14:37 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '12' | Access_Time: 0.00ms
+2025-07-23 16:14:37 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '12' | Result: 144 | Store_Time: 0.00ms
+2025-07-23 16:14:37 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 12 | Result: 144 | Calc_Time: 39.98ms | Total_Time: 685.72ms
+2025-07-23 16:14:41 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 549.54ms
+2025-07-23 16:14:42 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '15' | Choice: 2
+2025-07-23 16:14:42 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '15' | Access_Time: 0.00ms
+2025-07-23 16:14:42 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '15' | Result: 610 | Store_Time: 0.00ms
+2025-07-23 16:14:42 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 15 | Result: 610 | Calc_Time: 0.20ms | Total_Time: 440.24ms
+2025-07-23 16:14:46 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 532.98ms
+2025-07-23 16:14:47 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '25' | Choice: 2
+2025-07-23 16:14:47 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '25' | Access_Time: 0.00ms
+2025-07-23 16:14:47 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '25' | Result: 75025 | Store_Time: 0.00ms
+2025-07-23 16:14:47 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 25 | Result: 75025 | Calc_Time: 13.60ms | Total_Time: 624.24ms
+2025-07-23 16:14:53 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 626.50ms
+2025-07-23 16:14:53 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '40' | Choice: 2
+2025-07-23 16:14:53 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '40' | Access_Time: 0.00ms
+2025-07-23 16:15:56 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 1162.12ms
+2025-07-23 16:15:57 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '35' | Choice: 2
+2025-07-23 16:15:57 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '35' | Access_Time: 0.00ms
+2025-07-23 16:16:05 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '35' | Result: 9227465 | Store_Time: 0.01ms
+2025-07-23 16:16:05 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 35 | Result: 9227465 | Calc_Time: 8777.83ms | Total_Time: 9296.53ms
+2025-07-23 16:16:17 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 1015.40ms
+2025-07-23 16:16:18 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '39' | Choice: 2
+2025-07-23 16:16:18 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '39' | Access_Time: 0.00ms
+2025-07-23 16:16:21 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '40' | Result: 102334155 | Store_Time: 0.00ms
+2025-07-23 16:16:21 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 40 | Result: 102334155 | Calc_Time: 87121.53ms | Total_Time: 87808.26ms
+2025-07-23 16:18:44 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 7.66ms
+2025-07-23 16:18:44 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '29' | Choice: 2
+2025-07-23 16:18:44 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '29' | Access_Time: 0.01ms
+2025-07-23 16:18:44 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '29' | Result: 514229 | Store_Time: 0.00ms
+2025-07-23 16:18:44 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 29 | Result: 514229 | Calc_Time: 290.87ms | Total_Time: 300.85ms
+2025-07-23 16:18:48 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 6.16ms
+2025-07-23 16:18:48 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '30' | Choice: 2
+2025-07-23 16:18:48 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '30' | Access_Time: 0.00ms
+2025-07-23 16:18:49 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '30' | Result: 832040 | Store_Time: 0.00ms
+2025-07-23 16:18:49 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 30 | Result: 832040 | Calc_Time: 492.49ms | Total_Time: 499.36ms
+2025-07-23 16:18:58 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 6.42ms
+2025-07-23 16:18:58 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '31' | Choice: 2
+2025-07-23 16:18:58 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '31' | Access_Time: 0.00ms
+2025-07-23 16:18:59 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '31' | Result: 1346269 | Store_Time: 0.00ms
+2025-07-23 16:18:59 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 31 | Result: 1346269 | Calc_Time: 788.39ms | Total_Time: 795.79ms
+2025-07-23 16:19:08 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 5.74ms
+2025-07-23 16:19:08 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '32' | Choice: 2
+2025-07-23 16:19:08 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '32' | Access_Time: 0.00ms
+2025-07-23 16:19:09 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '32' | Result: 2178309 | Store_Time: 0.00ms
+2025-07-23 16:19:09 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 32 | Result: 2178309 | Calc_Time: 1347.82ms | Total_Time: 1354.82ms
+2025-07-23 16:45:18 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 11.72ms
+2025-07-23 16:45:18 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '4' | Choice: 2
+2025-07-23 16:45:18 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '4' | Access_Time: 0.00ms
+2025-07-23 16:45:18 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '4' | Result: 3 | Store_Time: 0.00ms
+2025-07-23 16:45:18 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 4 | Result: 3 | Calc_Time: 0.33ms | Total_Time: 10.21ms
+2025-07-23 16:45:45 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 6.81ms
+2025-07-23 16:45:45 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '31' | Choice: 2
+2025-07-23 16:45:45 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '31' | Access_Time: 0.00ms
+2025-07-23 16:45:46 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '31' | Result: 1346269 | Store_Time: 0.01ms
+2025-07-23 16:45:46 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 31 | Result: 1346269 | Calc_Time: 784.68ms | Total_Time: 793.80ms
+2025-07-23 16:54:02 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 3.53ms
+2025-07-23 16:54:02 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '28' | Choice: 2
+2025-07-23 16:54:02 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '28' | Access_Time: 0.00ms
+2025-07-23 16:54:02 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '28' | Result: 317811 | Store_Time: 0.00ms
+2025-07-23 16:54:02 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 28 | Result: 317811 | Calc_Time: 60.04ms | Total_Time: 64.56ms
+2025-07-23 16:54:11 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 4.70ms
+2025-07-23 16:54:11 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '31' | Choice: 2
+2025-07-23 16:54:11 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '31' | Access_Time: 0.00ms
+2025-07-23 16:54:11 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '31' | Result: 1346269 | Store_Time: 0.00ms
+2025-07-23 16:54:11 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 31 | Result: 1346269 | Calc_Time: 248.32ms | Total_Time: 253.66ms
+2025-07-23 16:58:36 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 6.91ms
+2025-07-23 16:58:36 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '29' | Choice: 2
+2025-07-23 16:58:36 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '29' | Access_Time: 0.00ms
+2025-07-23 16:58:36 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '29' | Result: 514229 | Store_Time: 0.00ms
+2025-07-23 16:58:36 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 29 | Result: 514229 | Calc_Time: 239.80ms | Total_Time: 247.16ms
+2025-07-23 16:58:44 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 5.37ms
+2025-07-23 16:58:44 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '31' | Choice: 2
+2025-07-23 16:58:44 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '31' | Access_Time: 0.00ms
+2025-07-23 16:58:44 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '31' | Result: 1346269 | Store_Time: 0.00ms
+2025-07-23 16:58:44 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 31 | Result: 1346269 | Calc_Time: 239.90ms | Total_Time: 245.20ms
+2025-07-23 16:58:51 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 5.12ms
+2025-07-23 16:58:51 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '31' | Choice: 2
+2025-07-23 16:58:51 | INFO     | CACHE_HIT | Operation: fibonacci | Input: '31' | Result: 1346269 | Access_Time: 0.00ms
+2025-07-23 16:58:51 | INFO     | CALCULATION_SUCCESS_CACHED | Operation: fibonacci | Input: 31 | Result: 1346269 | Total_Time: 3.62ms
+2025-07-23 16:58:58 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 4.41ms
+2025-07-23 16:58:58 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '41' | Choice: 2
+2025-07-23 16:58:58 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '41' | Access_Time: 0.00ms
+2025-07-23 16:58:59 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 155.71ms
+2025-07-23 16:58:59 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '41' | Choice: 2
+2025-07-23 16:58:59 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '41' | Access_Time: 0.00ms
+2025-07-23 16:59:27 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 5.52ms
+2025-07-23 16:59:27 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '31' | Choice: 2
+2025-07-23 16:59:27 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '31' | Access_Time: 0.00ms
+2025-07-23 16:59:27 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '31' | Result: 1346269 | Store_Time: 0.00ms
+2025-07-23 16:59:27 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 31 | Result: 1346269 | Calc_Time: 641.13ms | Total_Time: 650.22ms
+2025-07-23 17:00:09 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 6.60ms
+2025-07-23 17:00:18 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 5.91ms
+2025-07-23 17:00:18 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '29' | Choice: 2
+2025-07-23 17:00:18 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '29' | Access_Time: 0.00ms
+2025-07-23 17:00:18 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '29' | Result: 514229 | Store_Time: 0.00ms
+2025-07-23 17:00:18 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 29 | Result: 514229 | Calc_Time: 97.00ms | Total_Time: 102.47ms
+2025-07-23 17:00:21 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 5.18ms
+2025-07-24 11:08:09 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 3.33ms
+2025-07-24 11:08:28 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 3.51ms
+2025-07-24 11:08:29 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 5.16ms
+2025-07-24 11:08:33 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 6.82ms
+2025-07-24 11:08:47 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 3.60ms
+2025-07-24 11:09:13 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 6.14ms
+2025-07-24 11:09:15 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 5.77ms
+2025-07-24 11:09:51 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 5.43ms
+2025-07-24 11:14:36 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 6.64ms
+2025-07-24 11:19:53 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 5.87ms
+2025-07-24 11:20:55 | INFO     | CHOICE_CHANGE | User: None | Choice: 2 | Execution_Time: 3.65ms
+2025-07-24 11:28:19 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 6.70ms
+2025-07-24 11:28:19 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '29' | Choice: 2
+2025-07-24 11:28:19 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '29' | Access_Time: 0.00ms
+2025-07-24 11:28:19 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '29' | Result: 514229 | Store_Time: 0.01ms
+2025-07-24 11:28:19 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 29 | Result: 514229 | Calc_Time: 298.16ms | Total_Time: 306.64ms
+2025-07-24 13:21:04 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 3.53ms
+2025-07-24 13:21:04 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '29' | Choice: 2
+2025-07-24 13:21:04 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '29' | Access_Time: 0.00ms
+2025-07-24 13:21:04 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '29' | Result: 514229 | Store_Time: 0.00ms
+2025-07-24 13:21:04 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 29 | Result: 514229 | Calc_Time: 93.32ms | Total_Time: 98.56ms
+2025-07-24 13:25:36 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 5.15ms
+2025-07-24 14:06:30 | INFO     | CHOICE_CHANGE | User: admin | Choice: 2 | Execution_Time: 3.47ms
+2025-07-24 14:06:30 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '31' | Choice: 2
+2025-07-24 14:06:30 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '31' | Access_Time: 0.00ms
+2025-07-24 14:06:31 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '31' | Result: 1346269 | Store_Time: 0.00ms
+2025-07-24 14:06:31 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 31 | Result: 1346269 | Calc_Time: 243.87ms | Total_Time: 249.01ms
+2025-07-24 17:16:48 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 6.03ms
+2025-07-24 17:16:48 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '29' | Choice: 2
+2025-07-24 17:16:48 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '29' | Access_Time: 0.01ms
+2025-07-24 17:16:48 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '29' | Result: 514229 | Store_Time: 0.01ms
+2025-07-24 17:16:48 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 29 | Result: 514229 | Calc_Time: 285.32ms | Total_Time: 292.72ms
+2025-07-24 17:16:59 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 3.20ms
+2025-07-24 17:34:09 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 6.32ms
+2025-07-24 17:34:09 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '29' | Choice: 2
+2025-07-24 17:34:09 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '29' | Access_Time: 0.01ms
+2025-07-24 17:34:10 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '29' | Result: 514229 | Store_Time: 0.01ms
+2025-07-24 17:34:10 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 29 | Result: 514229 | Calc_Time: 341.14ms | Total_Time: 348.98ms
+2025-07-24 17:34:12 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 8.41ms
+2025-07-24 15:33:46 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 4.55ms
+2025-07-24 15:33:46 | INFO     | CALCULATION_START | Operation: fibonacci | Input: '29' | Choice: 2
+2025-07-24 15:33:46 | INFO     | CACHE_MISS | Operation: fibonacci | Input: '29' | Access_Time: 0.00ms
+2025-07-24 15:33:46 | INFO     | CACHE_STORE | Operation: fibonacci | Input: '29' | Result: 514229 | Store_Time: 0.00ms
+2025-07-24 15:33:46 | INFO     | CALCULATION_SUCCESS | Operation: fibonacci | Input: 29 | Result: 514229 | Calc_Time: 75.49ms | Total_Time: 82.13ms
+2025-07-24 15:39:01 | INFO     | CHOICE_CHANGE | User: user | Choice: 2 | Execution_Time: 4.91ms

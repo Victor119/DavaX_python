@@ -1,0 +1,31 @@
+# Python image
+FROM python:3.12.2-slim-bookworm
+
+# Set the working directory
+WORKDIR /app
+
+# Copy the code in the container
+COPY . /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install dependency
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p data logs
+
+# Expose port Flask (5000)
+EXPOSE 5000
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV CONTAINER_MODE=true
+
+# Run 
+CMD ["python", "main.py"]
+

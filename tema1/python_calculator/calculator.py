@@ -318,7 +318,7 @@ def calculam_lst_fara_paranteze_1(sir):
                     lista_semne.append(sir[i])
 
             print("lista_semne=", lista_semne)
-            lista_flaoturi = re.findall("\d+\.\d+", sir)
+            lista_flaoturi = re.findall(r"\d+\.\d+", sir)
             res = re.findall(r"[-+]?(?:\d*\.*\d+)", sir)
             print("lista_floaturi_2=", res)
             print("lista_floaturi=", lista_flaoturi)
@@ -716,7 +716,7 @@ def calculam_lst_fara_paranteze(sir):
                 lista_semne.append(afisat[i])
 
         print("lista_semne=", lista_semne)
-        lista_flaoturi = re.findall("\d+\.\d+", afisat)
+        lista_flaoturi = re.findall(r"\d+\.\d+", afisat)
         res = re.findall(r"[-+]?(?:\d*\.*\d+)", afisat)
         print("lista_floaturi_2=", res)
         print("lista_floaturi=", lista_flaoturi)
