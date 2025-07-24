@@ -354,8 +354,21 @@ logger, calc_logger = setup_enhanced_logging()
 # ----------------------------- DATABASE LAYER -------------------------------
 
 class DatabaseManager:
-    def __init__(self, db_path: str = "calculator_api.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str = None):
+        # 1. Try from the environment variable (e.g. set in Dockerfile or docker-compose)
+        env_db_path = os.environ.get("DB_PATH")
+
+        # 2. If it is not set, use a relative path in the 'data' folder
+        if db_path:
+            self.db_path = db_path
+        elif env_db_path:
+            self.db_path = env_db_path
+        else:
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            data_dir = os.path.join(base_dir, "data")
+            os.makedirs(data_dir, exist_ok=True)
+            self.db_path = os.path.join(data_dir, "calculator_api.db")
+            
         self.init_database()
 
     def init_database(self):
@@ -1294,9 +1307,6 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 CORS(app)
 
-# Initialize database manager
-db_manager = DatabaseManager()
-
 # Initialize GLOBAL cache that persists between requests
 global_cache = ExpressionCache()
 
@@ -1730,41 +1740,136 @@ def setup_signal_handlers(auth_manager):
     
     logger.info("Signal handlers registered for graceful shutdown")
 
-if __name__ == "__main__":
-    print("=== Calculator Application with Authentication ===")
-    print("Default credentials:")
-    print("Admin: username='admin', password='admin123'")
-    print("User:  username='user', password='user123'")
-    print()
+def get_container_auth_from_env():
+    """Get authentication credentials from environment variables for container deployment"""
+    username = os.environ.get('CONTAINER_USERNAME')
+    password = os.environ.get('CONTAINER_PASSWORD')
     
-    # Remove persisted auth state before authentication
-    auth_state_path = os.path.join(os.path.dirname(__file__), '.auth_state.json')
-    if os.path.exists(auth_state_path):
-        try:
-            os.remove(auth_state_path)
-            print("Previous authentication state cleared.")
-        except Exception as e:
-            print(f"Failed to clear previous auth state: {e}")
+    if username and password:
+        logger.info(f"Container authentication credentials found for user: {username}")
+        return username, password
     
-    # Initialize authentication manager
-    auth_manager = AuthenticationManager()
+    return None, None
 
-    # Console authentication
-    auth_success, user_role = auth_manager.authenticate_console()
+def authenticate_container_mode(self) -> Tuple[bool, str]:
+    """Container-friendly authentication using environment variables"""
+    if self.current_user and self.current_role:
+        logger.info(f"Already authenticated as {self.current_user} ({self.current_role})")
+        return True, self.current_role
+    
+    # Try to get credentials from environment
+    username, password = get_container_auth_from_env()
+    
+    if username and password:
+        if self.verify_credentials(username, password):
+            self.current_user = username
+            self.current_role = self.users[username]['role']
+            self._persist_auth_state()
+            
+            logger.info(f"Container authentication successful for {username} ({self.current_role})")
+            print(f"Container authentication successful! Logged in as {username} ({self.current_role})")
+            
+            return True, self.current_role
+        else:
+            logger.warning(f"Container authentication failed for user: {username}")
+            print(f"Container authentication failed for user: {username}")
+            return False, None
+    
+    # Fallback to default admin if no env vars are set (for development)
+    default_username = "admin"
+    default_password = "admin123"
+    
+    if self.verify_credentials(default_username, default_password):
+        self.current_user = default_username
+        self.current_role = self.users[default_username]['role']
+        self._persist_auth_state()
+        
+        logger.info(f"Default authentication used for {default_username} ({self.current_role})")
+        print(f"Using default authentication: {default_username} ({self.current_role})")
+        
+        return True, self.current_role
+    
+    return False, None
+
+# PATCH: bind method to class
+setattr(AuthenticationManager, "authenticate_container_mode", authenticate_container_mode)
+
+def is_container_mode():
+    """Check if running in container mode"""
+    return os.environ.get('CONTAINER_MODE', 'false').lower() == 'true'
+
+def setup_authentication():
+    """Setup authentication based on environment (container vs interactive)"""
+    auth_manager = AuthenticationManager()
+    
+    if is_container_mode():
+        print("=== Container Mode Detected ===")
+        auth_success, user_role = auth_manager.authenticate_container_mode()
+    else:
+        print("=== Interactive Mode ===")
+        print("Default credentials:")
+        print("Admin: username='admin', password='admin123'")
+        print("User:  username='user', password='user123'")
+        print()
+        
+        # Remove persisted auth state before authentication
+        auth_state_path = os.path.join(os.path.dirname(__file__), '.auth_state.json')
+        if os.path.exists(auth_state_path):
+            try:
+                os.remove(auth_state_path)
+                print("Previous authentication state cleared.")
+            except Exception as e:
+                print(f"Failed to clear previous auth state: {e}")
+        
+        auth_success, user_role = auth_manager.authenticate_console()
     
     if not auth_success:
-        print("Authentication failed. Exiting...")
+        if is_container_mode():
+            logger.error("Container authentication failed. Check CONTAINER_USERNAME and CONTAINER_PASSWORD environment variables.")
+            print("Container authentication failed. Exiting...")
+        else:
+            print("Authentication failed. Exiting...")
         sys.exit(1)
+    
+    return auth_manager, user_role
+
+
+if __name__ == "__main__":
+    # Create folder data if it does not exist
+    data_folder = os.path.join(os.path.dirname(__file__), "data")
+    if not os.path.exists(data_folder):
+        os.makedirs(data_folder)
+        print(f"[INFO] Folderul 'data' a fost creat automat: {data_folder}")
+    else:
+        print(f"[INFO] Folderul 'data' există deja: {data_folder}")
+    
+    # Initialize database manager
+    db_manager = DatabaseManager()
+    
+    print("=== Calculator Application with Authentication ===")
+    
+    # Setup authentication based on environment
+    auth_manager, user_role = setup_authentication()
     
     # Setup signal handlers AFTER successful authentication
     setup_signal_handlers(auth_manager)
     
     print(f"\nStarting Flask application with user role: {user_role}")
-    print("Server will run on http://127.0.0.1:5000")
-    print("Press Ctrl+C to stop the server and logout.")
+    
+    if is_container_mode():
+        print("Server will run on http://0.0.0.0:5000 (Container Mode)")
+        host = "0.0.0.0"
+        port = int(os.environ.get('PORT', 5000))
+        debug = os.environ.get('FLASK_DEBUG', 'false').lower() == 'true'
+    else:
+        print("Server will run on http://127.0.0.1:5000 (Interactive Mode)")
+        print("Press Ctrl+C to stop the server and logout.")
+        host = "127.0.0.1"
+        port = 5000
+        debug = True
     
     try:
-        app.run(debug=True, use_reloader=False)  # Disable reloader to avoid signal conflicts
+        app.run(host=host, port=port, debug=debug, use_reloader=False)
     except KeyboardInterrupt:
         print("\n\nShutting down server...")
         auth_manager.logout()
