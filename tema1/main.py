@@ -8,6 +8,11 @@ from datetime import datetime
 from typing import Optional, Dict, Any
 from contextlib import contextmanager
 import time
+import signal
+import hashlib
+import getpass
+import atexit
+from typing import Optional, Tuple
 
 # add path to folder python_calculator
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "python_calculator")))
@@ -129,6 +134,159 @@ HTML_TEMPLATE = """
 </body>
 </html>
 """
+
+# ----------------------------- AUTHENTICATION SYSTEM ---------------------------
+
+class AuthenticationManager:
+    """Simple console-based authentication system"""
+    
+    def __init__(self):
+        # Path to persisted auth state
+        self.auth_state_path = os.path.join(os.path.dirname(__file__), '.auth_state.json')
+        
+        # Predefined users (in production, use a database)
+        self.users = {
+            'admin': {
+                'password_hash': self._hash_password('admin123'),
+                'role': 'admin'
+            },
+            'user': {
+                'password_hash': self._hash_password('user123'),
+                'role': 'user'
+            }
+        }
+        # Use a global temp file or env-based storage for persistence across app startup
+        self.auth_state_path = os.path.join(os.path.dirname(__file__), '.auth_state.json')
+        self.current_user = None
+        self.current_role = None
+        self._load_auth_state()
+    
+    def _hash_password(self, password: str) -> str:
+        """Hash password using SHA-256"""
+        return hashlib.sha256(password.encode()).hexdigest()
+    
+    def _load_auth_state(self):
+        if os.path.exists(self.auth_state_path):
+            try:
+                with open(self.auth_state_path, 'r') as f:
+                    state = json.load(f)
+                    self.current_user = state.get('user')
+                    self.current_role = state.get('role')
+                    if self.current_user and self.current_role:
+                        logger.info(f"Loaded persisted authentication for {self.current_user} ({self.current_role})")
+            except Exception as e:
+                logger.warning(f"Failed to load auth state: {e}")
+    
+    def _persist_auth_state(self):
+        try:
+            with open(self.auth_state_path, 'w') as f:
+                json.dump({
+                    'user': self.current_user,
+                    'role': self.current_role
+                }, f)
+        except Exception as e:
+            logger.warning(f"Failed to persist auth state: {e}")
+    
+    def authenticate_console(self) -> Tuple[bool, str]:
+        """Console-based authentication with enhanced interrupt handling"""
+        if self.current_user and self.current_role:
+            print(f"Already authenticated as {self.current_user} ({self.current_role})")
+            return True, self.current_role
+        
+        print("\n=== Calculator Authentication ===")
+        max_attempts = 3
+        
+        for attempt in range(max_attempts):
+            try:
+                username = input("Username: ").strip()
+                password = getpass.getpass("Password: ")
+                
+                if self.verify_credentials(username, password):
+                    self.current_user = username
+                    self.current_role = self.users[username]['role']
+                    self._persist_auth_state()
+                    print(f" Authentication successful! Logged in as {username} ({self.current_role})")
+                    logger.info(f"User {username} authenticated successfully with role {self.current_role}")
+                    return True, self.current_role
+                else:
+                    remaining = max_attempts - attempt - 1
+                    if remaining > 0:
+                        print(f" Invalid credentials. {remaining} attempts remaining.")
+                    else:
+                        print(" Authentication failed. Maximum attempts exceeded.")
+                        logger.warning(f"Authentication failed for user: {username}")
+                    
+            except KeyboardInterrupt:
+                print("\n\nAuthentication cancelled by user (Ctrl+C).")
+                print("Cleaning up and exiting...")
+                self.logout()  # Clear auth state if interrupted
+                sys.exit(0)  # Exit cleanly instead of returning False
+            except EOFError:
+                print("\n\nInput terminated (terminal killed).")
+                print("Cleaning up and exiting...")
+                self.logout()  # Clear auth state if interrupted
+                sys.exit(0)  # Exit cleanly
+            except Exception as e:
+                print(f"Authentication error: {e}")
+                logger.error(f"Authentication error: {e}")
+        
+        self.logout()  # Clear auth state on final failure
+        return False, None
+    
+    def verify_credentials(self, username: str, password: str) -> bool:
+        """Verify user credentials"""
+        if username not in self.users:
+            return False
+        
+        password_hash = self._hash_password(password)
+        return self.users[username]['password_hash'] == password_hash
+    
+    def is_admin(self) -> bool:
+        """Check if current user is admin"""
+        return self.current_role == 'admin'
+    
+    def is_authenticated(self) -> bool:
+        """Check if user is authenticated"""
+        return self.current_user is not None
+    
+    def get_current_user(self) -> Optional[str]:
+        """Get current username"""
+        return self.current_user
+    
+    def get_current_role(self) -> Optional[str]:
+        """Get current user role"""
+        return self.current_role
+    
+    def logout(self):
+        """Logout current user with enhanced logging"""
+        if self.current_user:
+            logger.info(f"User {self.current_user} ({self.current_role}) logging out")
+            print(f"User {self.current_user} logged out.")
+            
+            # Log the logout time
+            try:
+                logout_info = {
+                    'user': self.current_user,
+                    'role': self.current_role,
+                    'logout_time': datetime.utcnow().isoformat(),
+                    'session_ended': True
+                }
+                logger.info(f"Logout details: {logout_info}")
+            except Exception as e:
+                logger.warning(f"Failed to log logout details: {e}")
+        else:
+            logger.info("Logout called but no user was logged in")
+        
+        self.current_user = None
+        self.current_role = None
+        
+        # Remove persisted auth file
+        if os.path.exists(self.auth_state_path):
+            try:
+                os.remove(self.auth_state_path)
+                logger.info("Persisted authentication state removed")
+            except Exception as e:
+                logger.warning(f"Failed to remove auth state file: {e}")
 
 # ----------------------------- LOGGING CONFIGURATION ---------------------------
 
@@ -609,14 +767,57 @@ class Model:
 # ----------------------------- CONTROLLER CLASS -------------------------------
 
 class Controller:
-    def __init__(self, db_manager: DatabaseManager = None):
+    def __init__(self, db_manager: DatabaseManager = None, auth_manager: AuthenticationManager = None):
         self.model = None
         self.db_manager = db_manager
+        self.auth_manager = auth_manager or AuthenticationManager()
+        
+        # Define restricted operations (only admin can use these)
+        self.admin_only_operations = {
+            'calculator': ['eval', 'exec', 'import', '__'],  # Dangerous expressions
+            'fibonacci': [30, 100],  # Numbers above these values
+            'factorial': [100, 200]  # Numbers above these values
+        }
 
     def setModel(self, aModel: Model):
         self.model = aModel
+    
+    def check_permission(self, operation_type: str, input_value: str) -> Tuple[bool, str]:
+        """Check if current user has permission for the operation"""
+        if not self.auth_manager.is_authenticated():
+            return False, "Authentication required"
+        
+        if self.auth_manager.is_admin():
+            return True, "Admin access granted"
+        
+        # Check user restrictions
+        if operation_type == 'calculator':
+            # Check for dangerous expressions
+            dangerous_keywords = self.admin_only_operations['calculator']
+            input_lower = input_value.lower()
+            for keyword in dangerous_keywords:
+                if keyword in input_lower:
+                    return False, f"Expression contains restricted keyword '{keyword}'. Admin access required."
+        
+        elif operation_type == 'fibonacci':
+            try:
+                n = int(input_value.strip())
+                if n > 29 and not self.auth_manager.is_admin():
+                    return False, f"Fibonacci numbers above {max(self.admin_only_operations['fibonacci'])} require admin access."
+            except ValueError:
+                return False, "Invalid input for fibonacci"
+        
+        elif operation_type == 'factorial':
+            try:
+                n = int(input_value.strip())
+                if n > max(self.admin_only_operations['factorial']):
+                    return False, f"Factorial numbers above {max(self.admin_only_operations['factorial'])} require admin access."
+            except ValueError:
+                return False, "Invalid input for factorial"
+        
+        return True, "User access granted"
 
-    def chControl(self, aString: str): # apply the action from the GUI to the model
+    def chControl(self, aString: str):
         """Apply the action from the GUI to the model with logging"""
         start_time = time.time()
         try:
@@ -624,16 +825,15 @@ class Controller:
             self.model.setLastChoice(ch)
             
             execution_time = (time.time() - start_time) * 1000
-            calc_logger.info(f"CHOICE_CHANGE | Choice: {ch} | Execution_Time: {execution_time:.2f}ms")
-            logger.debug(f"Choice changed to {ch}")
+            calc_logger.info(f"CHOICE_CHANGE | User: {self.auth_manager.get_current_user()} | "
+                        f"Choice: {ch} | Execution_Time: {execution_time:.2f}ms")
             
         except Exception as e:
             execution_time = (time.time() - start_time) * 1000
             error_msg = f"Invalid input to Controller.chControl: {aString}"
             
-            calc_logger.error(f"CHOICE_ERROR | Input: '{aString}' | Error: {str(e)} | "
-                            f"Execution_Time: {execution_time:.2f}ms")
-            logger.error(f"{error_msg}, Error: {e}")
+            calc_logger.error(f"CHOICE_ERROR | User: {self.auth_manager.get_current_user()} | "
+                        f"Input: '{aString}' | Error: {str(e)} | Execution_Time: {execution_time:.2f}ms")
             
             print(error_msg, e)
             
@@ -1313,6 +1513,72 @@ def api_cache_clear():
         logger.error(f"Cache clear error in {request_time:.2f}ms for {client_ip}: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@app.route('/api/login', methods=['POST'])
+def api_login():
+    """API endpoint for authentication"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'username' not in data or 'password' not in data:
+            return jsonify({'error': 'Username and password are required'}), 400
+        
+        username = data['username']
+        password = data['password']
+        
+        if auth_manager.verify_credentials(username, password):
+            auth_manager.current_user = username
+            auth_manager.current_role = auth_manager.users[username]['role']
+            
+            logger.info(f"API authentication successful for user: {username}")
+            
+            return jsonify({
+                'status': 'success',
+                'message': 'Authentication successful',
+                'user': username,
+                'role': auth_manager.current_role,
+                'timestamp': datetime.utcnow().isoformat()
+            }), 200
+        else:
+            logger.warning(f"API authentication failed for user: {username}")
+            return jsonify({'error': 'Invalid credentials'}), 401
+            
+    except Exception as e:
+        logger.error(f"Login API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/logout', methods=['POST'])
+def api_logout():
+    """API endpoint for logout"""
+    try:
+        current_user = auth_manager.get_current_user()
+        auth_manager.logout()
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'User {current_user} logged out successfully',
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Logout API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/api/auth/status', methods=['GET'])
+def api_auth_status():
+    """Get current authentication status"""
+    try:
+        return jsonify({
+            'authenticated': auth_manager.is_authenticated(),
+            'user': auth_manager.get_current_user(),
+            'role': auth_manager.get_current_role(),
+            'is_admin': auth_manager.is_admin(),
+            'timestamp': datetime.utcnow().isoformat()
+        }), 200
+        
+    except Exception as e:
+        logger.error(f"Auth status API error: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 # ----------------------------- ROUTING --------------------------
 
 @app.route("/", methods=["GET", "POST"])
@@ -1371,8 +1637,34 @@ def index():
         if selected_choice:
             chCntrl.chControl(selected_choice)
         
-        # Process input text
-        chCntrl.inpControl(input_text)
+        # Enforce permission check before proceeding to inpControl
+        operation_type = None
+        if selected_choice:
+            selected_choice = int(selected_choice)
+            if selected_choice == 1:
+                operation_type = "calculator"
+            elif selected_choice == 2:
+                operation_type = "fibonacci"
+            elif selected_choice == 3:
+                operation_type = "factorial"
+
+        # Check permission only if operation type is known
+        error_message = None
+        if operation_type:
+            permitted, msg = chCntrl.check_permission(operation_type, input_text)
+            if not permitted:
+                error_message = msg
+                # Display error in appropriate output box
+                if operation_type == "calculator":
+                    firstdb.setText(msg)
+                elif operation_type == "fibonacci":
+                    seconddb.setText(msg)
+                elif operation_type == "factorial":
+                    thirddb.setText(msg)
+        
+        # Proceed if no permission error
+        if not error_message:
+            chCntrl.inpControl(input_text)
         
         # Set current_input for rendering
         current_input = input_text
@@ -1393,6 +1685,91 @@ def index():
     })
     
     return render_template_string(HTML_TEMPLATE, **render_params)
+
+def setup_signal_handlers(auth_manager):
+    """Setup signal handlers for graceful shutdown and logout"""
     
+    def signal_handler(sig, frame):
+        """Handle termination signals and logout user"""
+        signal_names = {
+            signal.SIGINT: "SIGINT (Ctrl+C)",
+            signal.SIGTERM: "SIGTERM (kill)",
+        }
+        
+        signal_name = signal_names.get(sig, f"Signal {sig}")
+        current_user = auth_manager.get_current_user()
+        
+        print(f"\n\n=== {signal_name} received ===")
+        
+        if current_user:
+            print(f"Logging out user: {current_user}")
+            auth_manager.logout()
+            print("User logged out successfully.")
+        else:
+            print("No user was logged in.")
+        
+        print("Shutting down gracefully...")
+        print("Goodbye!")
+        
+        # Exit cleanly
+        sys.exit(0)
+    
+    def cleanup_on_exit():
+        """Cleanup function called on normal exit"""
+        current_user = auth_manager.get_current_user()
+        if current_user:
+            print(f"\nCleaning up: logging out user {current_user}")
+            auth_manager.logout()
+    
+    # Register signal handlers
+    signal.signal(signal.SIGINT, signal_handler)   # Ctrl+C
+    signal.signal(signal.SIGTERM, signal_handler)  # kill command
+    
+    # Register cleanup function for normal exit
+    atexit.register(cleanup_on_exit)
+    
+    logger.info("Signal handlers registered for graceful shutdown")
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    print("=== Calculator Application with Authentication ===")
+    print("Default credentials:")
+    print("Admin: username='admin', password='admin123'")
+    print("User:  username='user', password='user123'")
+    print()
+    
+    # Remove persisted auth state before authentication
+    auth_state_path = os.path.join(os.path.dirname(__file__), '.auth_state.json')
+    if os.path.exists(auth_state_path):
+        try:
+            os.remove(auth_state_path)
+            print("Previous authentication state cleared.")
+        except Exception as e:
+            print(f"Failed to clear previous auth state: {e}")
+    
+    # Initialize authentication manager
+    auth_manager = AuthenticationManager()
+
+    # Console authentication
+    auth_success, user_role = auth_manager.authenticate_console()
+    
+    if not auth_success:
+        print("Authentication failed. Exiting...")
+        sys.exit(1)
+    
+    # Setup signal handlers AFTER successful authentication
+    setup_signal_handlers(auth_manager)
+    
+    print(f"\nStarting Flask application with user role: {user_role}")
+    print("Server will run on http://127.0.0.1:5000")
+    print("Press Ctrl+C to stop the server and logout.")
+    
+    try:
+        app.run(debug=True, use_reloader=False)  # Disable reloader to avoid signal conflicts
+    except KeyboardInterrupt:
+        print("\n\nShutting down server...")
+        auth_manager.logout()
+        print("Goodbye!")
+    except Exception as e:
+        print(f"Server error: {e}")
+        auth_manager.logout()
+        sys.exit(1)
