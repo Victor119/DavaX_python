@@ -1,3 +1,4 @@
+<pre lang="markdown"> ## Project Structure ```
 TEMA1/
     ├── __pycache__/
     ├── data/                     # has file SQLite `calculator_api.db`
@@ -12,6 +13,7 @@ TEMA1/
     ├── main.py                  # Flask main application + web UI logic
     ├── requirements.txt         # Python dependencies
     ├── test_api_script.py       # API test script (automation)
+``` </pre>
 
 Key Features
 1. Authentication
