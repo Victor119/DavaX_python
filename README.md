@@ -1,17 +1,17 @@
 TEMA1/
-├── __pycache__/
-├── data/                     # has file SQLite `calculator_api.db`
-├── logs/                    # log directory
-│   ├── calculations.log
-│   ├── calculator_app.log
-│   └── errors.log
-├── python_calculator/       # for mathematical expressions
-├── .dockerignore
-├── compose.yaml             # Config Docker Compose
-├── dockerfile               # Dockerfile for containerization
-├── main.py                  # Flask main application + web UI logic
-├── requirements.txt         # Python dependencies
-├── test_api_script.py       # API test script (automation)
+    ├── __pycache__/
+    ├── data/                     # has file SQLite `calculator_api.db`
+    ├── logs/                    # log directory
+    │   ├── calculations.log
+    │   ├── calculator_app.log
+    │   └── errors.log
+    ├── python_calculator/       # for mathematical expressions
+    ├── .dockerignore
+    ├── compose.yaml             # Config Docker Compose
+    ├── dockerfile               # Dockerfile for containerization
+    ├── main.py                  # Flask main application + web UI logic
+    ├── requirements.txt         # Python dependencies
+    ├── test_api_script.py       # API test script (automation)
 
 Key Features
 1. Authentication
