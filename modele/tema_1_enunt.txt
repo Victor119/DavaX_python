@@ -1,0 +1,20 @@
+Implement a microservice that exposes an API to solve different mathematical operations:
+- the pow function
+- the n-th fibbonaci number
+- the factorial of the number
+ 
+Use a database to persist all the requests to the API. Expose the service as an API (not SOAP). Design the service as production ready service.
+ 
+Nice to haves: containerization, monitoring, caching, authorization, logging via a messaging/streaming framework.
+ 
+All implementation and design is up to you, following the below restirctions:
+- use a micro framework (any Flask-like will do, sync or async is up to you)
+- follow micro services development best practices (MVC/MVCS patterns)
+- use any API standard except SOAP
+- cosnsider an implementation that supports extensibility
+- as the database layer, use any SQL or NoSQL solution (for simplicity, SQLite will do)
+ 
+Bonus I: Also persist the requests to a message/streaming framework of your choosing.
+Bonus II: Implement a cloud native, serverless version of the service (you can implement either one or the other). For this you can use the free tier from clouds like AWS and GCP or the free credits for clouds like GCP, Azure, OCI.
+ 
+You don't have to implement everything in this document as long as you provide some working functionality. For evaluation purposes, either share a public repository with the code or a zip archive at least 1 day before your face to face technical interview.
